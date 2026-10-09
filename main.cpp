@@ -156,7 +156,6 @@ int main() {
         }
         break;
       case KEY_DOWN:
-        throw std::runtime_error("test");
         if (selAction+1 < static_cast<int>(actions.size())) {
           selAction++;
         }
