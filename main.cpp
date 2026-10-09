@@ -35,13 +35,14 @@ void drawLogs(WINDOW* w, const std::vector<std::string>& logLines) {
 }
 
 void drawStatus(WINDOW* w, const Status& status) {
-
+  mvwprintw(w, 1, 2, "%s", status.status.c_str());
 }
 
 int main() {
   std::vector<Action> actions = {{"run", 'r', "make run"}, {"deploy", 'd', "make deploy"}, {"repl", 'p', "make repl"}, {"ls", 'l', "make ls"}, {"reset", 'b', "make reset"}};
   int selAction = 0;
   std::vector<std::string> logLines;
+  Status status = {"online"};
   
   initscr();
   cbreak();
@@ -76,6 +77,7 @@ int main() {
 
     drawActions(top, actions, selAction); 
     drawLogs(mid, logLines);
+    drawStatus(bot, status);
 
     for ( WINDOW* w : windows ) {
       wnoutrefresh(w);
@@ -106,6 +108,12 @@ int main() {
         logLines.push_back("Selected: " + actions.at(selAction).command);
         break;
       default:
+        for (size_t i = 0; i < actions.size(); i++) {
+          if (actions.at(i).key == key) {
+            selAction = static_cast<int>(i);
+            logLines.push_back("Selected: " + actions.at(selAction).command);
+          }
+        }
         lastkey = key;
         break;
     }
