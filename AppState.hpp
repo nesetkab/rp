@@ -1,5 +1,7 @@
 #pragma once
+#include <mutex>
 #include <string>
+#include <vector>
 
 struct Action {
   std::string label;
@@ -9,4 +11,9 @@ struct Action {
 
 struct Status {
   std::string status;
+};
+
+struct SharedLog {
+  std::vector<std::string> lines;
+  std::mutex mutex;
 };

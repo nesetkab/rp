@@ -29,8 +29,19 @@ void drawLogs(WINDOW *w, const std::vector<std::string> &logLines) {
   }
 }
 
-void drawStatus(WINDOW *w, const Status &status) {
+void drawStatus(WINDOW *w, const Status &status,
+                const std::atomic<bool> &busy) {
   wattron(w, COLOR_PAIR(PAIR_GOOD));
   mvwprintw(w, 1, 2, "%s", status.status.c_str());
   wattroff(w, COLOR_PAIR(PAIR_GOOD));
+
+  if (busy) {
+    wattron(w, COLOR_PAIR(PAIR_WARN));
+    mvwprintw(w, 2, 2, "busy");
+    wattroff(w, COLOR_PAIR(PAIR_WARN));
+  } else {
+    wattron(w, COLOR_PAIR(PAIR_GOOD));
+    mvwprintw(w, 2, 2, "free");
+    wattroff(w, COLOR_PAIR(PAIR_GOOD));
+  }
 }
