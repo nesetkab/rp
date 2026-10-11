@@ -2,6 +2,7 @@
 #include "AppState.hpp"
 #include <atomic>
 #include <cstdio>
+#include <cstdlib>
 #include <mutex>
 #include <string>
 #include <sys/wait.h>
@@ -40,6 +41,19 @@ void runAnAction(SharedLog &sharedLog, const std::string &command) {
 void selectAnAction(SharedLog &sharedLog, const std::vector<Action> &actions,
                     int selAction, std::thread &worker,
                     std::atomic<bool> &busy) {
+  if (actions.at(selAction).label == "stop") {
+    if (!busy) {
+      addLine(sharedLog, "nothing to stop.");
+      return;
+    }
+    int result = std::system("pkill -f \"mpremote run\" > /dev/null 2>&1");
+    if (result == 0) {
+      addLine(sharedLog, "stopped.");
+    } else {
+      addLine(sharedLog, "nothing stopped, no running mpremote run found");
+    }
+    return;
+  }
   if (busy) {
     addLine(sharedLog, "busy, wait for the current command");
     return;

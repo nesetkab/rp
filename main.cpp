@@ -14,11 +14,15 @@
 
 int main() {
   try {
-    std::vector<Action> actions = {{"run", 'r', "make run"},
-                                   {"deploy", 'd', "make deploy"},
-                                   {"repl", 'p', "make repl"},
-                                   {"ls", 'l', "make ls"},
-                                   {"reset", 'b', "make reset"}};
+    std::vector<Action> actions = {
+        {"run", 'r', "make run"},
+        {"deploy", 'd', "make deploy"},
+        {"repl", 'p', "make repl"},
+        {"ls", 'l', "make ls"},
+        {"reset", 'b', "make reset"},
+        {"stop", 's', ""},
+        {"loop", 't',
+         "echo mpremote run test; while true; do echo tick; sleep 1; done"}};
     int selAction = 0;
     Status status = {"online"};
     SharedLog sharedLog;
