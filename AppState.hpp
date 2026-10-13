@@ -1,5 +1,7 @@
 #pragma once
 #include <atomic>
+#include <chrono>
+#include <filesystem>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -16,6 +18,7 @@ struct Status {
   std::string path;
   bool deviceFound = false;
   FilesState filesFound = FilesState::Unknown;
+  std::chrono::steady_clock::time_point lastCheck{};
 };
 
 struct Result {
@@ -29,4 +32,5 @@ struct SharedState {
   std::mutex mutex;
   std::atomic<bool> busy{false};
   Result result;
+  std::filesystem::file_time_type lastDeploy{};
 };

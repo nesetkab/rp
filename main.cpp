@@ -1,10 +1,11 @@
 #include "AppState.hpp"
 #include "Panel.hpp"
 #include "Runner.hpp"
+#include "StatusCheck.hpp"
 #include "Terminal.hpp"
 #include "View.hpp"
 #include <array>
-#include <atomic>
+#include <filesystem>
 #include <iostream>
 #include <mutex>
 #include <ncurses.h>
@@ -22,18 +23,19 @@ int main() {
         {"reset", 'b', "make reset"},
         {"stop", 's', ""},
         {"loop", 't',
-         "echo mpremote run test; while true; do echo tick; sleep 1; done"}};
+         "echo mpremote run test; while true; do echo tick; sleep 1; done"},
+        {"just ls", 'o', "ls"}};
     int selAction = 0;
-    Status status;
+    Status status = {std::filesystem::current_path(), false,
+                     FilesState::Unknown};
     SharedState sharedState;
     std::thread worker;
 
     Terminal terminal;
 
-    int rows = 0;
-    int cols = 0;
+    // make the three windows
+    int rows, cols = 0;
     getmaxyx(stdscr, rows, cols);
-
     int thirds = rows / 3;
     Panel winA(thirds, cols, 0, 0, "actions");
     Panel winL(thirds, cols, thirds, 0, "logs");
@@ -43,10 +45,13 @@ int main() {
     keypad(winA.get(), TRUE);
     bool dash = true;
     wtimeout(winA.get(), 100);
+
     while (dash) {
       for (Panel *p : windows) {
         p->drawFrame();
       }
+
+      checkStatus(status, sharedState);
 
       drawActions(winA.get(), actions, selAction);
       {
@@ -62,42 +67,48 @@ int main() {
 
       int key = wgetch(winA.get());
       switch (key) {
-      case ERR:
-        break;
-      case 'q':
-        dash = false;
-        break;
-      case KEY_UP:
-        if (selAction > 0) {
-          selAction--;
-        }
-        break;
-      case KEY_DOWN:
-        if (selAction + 1 < static_cast<int>(actions.size())) {
-          selAction++;
-        }
-        break;
-      case '\n':
-      case '\r':
-      case KEY_ENTER:
-      case ' ':
-        if (!actions.empty()) {
-          selectAnAction(sharedState, actions, selAction, worker);
-        }
-        break;
-      default:
-        for (size_t i = 0; i < actions.size(); i++) {
-          if (actions.at(i).key == key) {
-            selAction = static_cast<int>(i);
-            selectAnAction(sharedState, actions, selAction, worker);
-            break;
+        case ERR:
+          break;
+
+        case 'q':
+          dash = false;
+          break;
+
+        case KEY_UP:
+          if (selAction > 0) {
+            selAction--;
           }
-        }
-        break;
+          break;
+
+        case KEY_DOWN:
+          if (selAction + 1 < static_cast<int>(actions.size())) {
+            selAction++;
+          }
+          break;
+
+        case '\n':
+        case '\r':
+        case KEY_ENTER:
+        case ' ':
+          if (!actions.empty()) {
+            selectAnAction(sharedState, actions, selAction, worker);
+          }
+          break;
+
+        default:
+          for (size_t i = 0; i < actions.size(); i++) {
+            if (actions.at(i).key == key) {
+              selAction = static_cast<int>(i);
+              selectAnAction(sharedState, actions, selAction, worker);
+              break;
+            }
+          }
+          break;
       }
     }
-    if (worker.joinable())
+    if (worker.joinable()) {
       worker.join();
+    }
   } catch (const std::exception &e) {
     std::cerr << "error: " << e.what() << '\n';
     return 1;

@@ -1,10 +1,6 @@
 #include "View.hpp"
-#include "AppState.hpp"
-#include "Colors.hpp"
-#include <algorithm>
-#include <ncurses.h>
-#include <string>
-#include <vector>
+
+auto lastCheck = std::chrono::steady_clock::now();
 
 struct ColoredLine {
   std::string label;
@@ -47,16 +43,16 @@ ColoredLine drawFiles(const Status &status) {
   std::string label = "unknown";
   ColorPairs color = PAIR_NONE;
   switch (status.filesFound) {
-  case FilesState::Deployed:
-    color = PAIR_GOOD;
-    label = "deployed";
-    break;
-  case FilesState::Changed:
-    color = PAIR_WARN;
-    label = "changed, not deployed";
-    break;
-  default:
-    break;
+    case FilesState::Deployed:
+      color = PAIR_GOOD;
+      label = "deployed";
+      break;
+    case FilesState::Changed:
+      color = PAIR_WARN;
+      label = "changed, not deployed";
+      break;
+    default:
+      break;
   }
   return {label, color};
 }

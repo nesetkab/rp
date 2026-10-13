@@ -3,6 +3,8 @@
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
+#include <ctime>
+#include <filesystem>
 #include <mutex>
 #include <string>
 #include <sys/wait.h>
@@ -13,11 +15,11 @@ void addLine(SharedState &sharedState, const std::string &line) {
   sharedState.lines.push_back(line);
 }
 
-void runAnAction(SharedState &sharedState, const std::string &command) {
+bool runAnAction(SharedState &sharedState, const std::string &command) {
   FILE *pipe = popen((command + " 2>&1").c_str(), "r");
   if (pipe == nullptr) {
     addLine(sharedState, "err, pipe is nullptr. command did not start");
-    return;
+    return false;
   }
 
   char buffer[512];
@@ -35,7 +37,12 @@ void runAnAction(SharedState &sharedState, const std::string &command) {
     exitcode = WEXITSTATUS(status);
   }
   addLine(sharedState, "finished! exit code " + std::to_string(exitcode));
-  addLine(sharedState, "");
+  addLine(sharedState, " ");
+
+  if (exitcode == 0) {
+    return true;
+  }
+  return false;
 }
 
 void selectAnAction(SharedState &sharedState,
@@ -59,13 +66,36 @@ void selectAnAction(SharedState &sharedState,
     return;
   }
   std::string command = actions.at(selAction).command;
+  std::string label = actions.at(selAction).label;
+
   addLine(sharedState, "Selected: " + command);
   if (worker.joinable()) {
     worker.join();
   }
+
+  std::filesystem::file_time_type deployTime =
+      std::filesystem::file_time_type::clock::now();
   sharedState.busy = true;
-  worker = std::thread([&sharedState, command]() {
-    runAnAction(sharedState, command);
-    sharedState.busy = false;
+
+  worker = std::thread([&sharedState, command, label, deployTime]() {
+    bool resultPassed = runAnAction(sharedState, command);
+    std::time_t now = std::time(nullptr);
+    std::tm local{};
+    localtime_r(&now, &local);
+    char buffer[16];
+    std::strftime(buffer, sizeof(buffer), "%H:%M:%S", &local);
+    std::string resultTime = buffer;
+
+    {
+      std::lock_guard<std::mutex> lock(sharedState.mutex);
+      sharedState.result.resultPassed = resultPassed;
+      if (label == "deploy" && resultPassed) {
+        sharedState.lastDeploy = deployTime;
+      }
+      sharedState.result.resultLabel = label;
+      sharedState.result.resultTime = resultTime;
+    }
   });
+
+  sharedState.busy = false;
 }
