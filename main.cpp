@@ -57,8 +57,8 @@ int main() {
       {
         std::lock_guard<std::mutex> lock(sharedState.mutex);
         drawLogs(winL.get(), sharedState.lines);
+        drawStatus(winS.get(), status, sharedState);
       }
-      drawStatus(winS.get(), status, sharedState);
 
       for (Panel *p : windows) {
         wnoutrefresh(p->get());
