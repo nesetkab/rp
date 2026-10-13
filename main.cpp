@@ -24,10 +24,9 @@ int main() {
         {"loop", 't',
          "echo mpremote run test; while true; do echo tick; sleep 1; done"}};
     int selAction = 0;
-    Status status = {"online"};
-    SharedLog sharedLog;
+    Status status;
+    SharedState sharedState;
     std::thread worker;
-    std::atomic<bool> busy{false};
 
     Terminal terminal;
 
@@ -51,10 +50,10 @@ int main() {
 
       drawActions(winA.get(), actions, selAction);
       {
-        std::lock_guard<std::mutex> lock(sharedLog.mutex);
-        drawLogs(winL.get(), sharedLog.lines);
+        std::lock_guard<std::mutex> lock(sharedState.mutex);
+        drawLogs(winL.get(), sharedState.lines);
       }
-      drawStatus(winS.get(), status, busy);
+      drawStatus(winS.get(), status, sharedState);
 
       for (Panel *p : windows) {
         wnoutrefresh(p->get());
@@ -83,14 +82,14 @@ int main() {
       case KEY_ENTER:
       case ' ':
         if (!actions.empty()) {
-          selectAnAction(sharedLog, actions, selAction, worker, busy);
+          selectAnAction(sharedState, actions, selAction, worker);
         }
         break;
       default:
         for (size_t i = 0; i < actions.size(); i++) {
           if (actions.at(i).key == key) {
             selAction = static_cast<int>(i);
-            selectAnAction(sharedLog, actions, selAction, worker, busy);
+            selectAnAction(sharedState, actions, selAction, worker);
             break;
           }
         }

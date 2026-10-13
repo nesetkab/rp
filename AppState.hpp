@@ -1,7 +1,10 @@
 #pragma once
+#include <atomic>
 #include <mutex>
 #include <string>
 #include <vector>
+
+enum class FilesState { Unknown, Deployed, Changed };
 
 struct Action {
   std::string label;
@@ -10,10 +13,20 @@ struct Action {
 };
 
 struct Status {
-  std::string status;
+  std::string path;
+  bool deviceFound = false;
+  FilesState filesFound = FilesState::Unknown;
 };
 
-struct SharedLog {
+struct Result {
+  std::string resultLabel;
+  bool resultPassed = false;
+  std::string resultTime;
+};
+
+struct SharedState {
   std::vector<std::string> lines;
   std::mutex mutex;
+  std::atomic<bool> busy{false};
+  Result result;
 };
