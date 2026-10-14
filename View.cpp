@@ -1,7 +1,5 @@
 #include "View.hpp"
 
-auto lastCheck = std::chrono::steady_clock::now();
-
 struct ColoredLine {
   std::string label;
   ColorPairs color;

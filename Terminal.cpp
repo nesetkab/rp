@@ -17,6 +17,6 @@ Terminal::Terminal() {
 }
 
 Terminal::~Terminal() {
-  endwin();
   curs_set(1);
+  endwin();
 }

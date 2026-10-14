@@ -71,6 +71,7 @@ int main() {
           break;
 
         case 'q':
+          stopCommand(sharedState);
           dash = false;
           break;
 
