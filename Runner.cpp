@@ -53,7 +53,7 @@ void selectAnAction(SharedState &sharedState,
       addLine(sharedState, "nothing to stop.");
       return;
     }
-    int result = std::system("pkill -f \"mpremote run\" > /dev/null 2>&1");
+    int result = std::system("pkill -f \"[m]premote\" > /dev/null 2>&1");
     if (result == 0) {
       addLine(sharedState, "stopped.");
     } else {
@@ -95,7 +95,6 @@ void selectAnAction(SharedState &sharedState,
       sharedState.result.resultLabel = label;
       sharedState.result.resultTime = resultTime;
     }
+    sharedState.busy = false;
   });
-
-  sharedState.busy = false;
 }
