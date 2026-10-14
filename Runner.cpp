@@ -46,11 +46,15 @@ bool runAnAction(SharedState &sharedState, const std::string &command) {
 }
 
 void stopCommand(SharedState &sharedState) {
+  if (!sharedState.busy) {
+    addLine(sharedState, "nothing to stop.");
+    return;
+  }
   int result = std::system("pkill -f \"[m]premote\" > /dev/null 2>&1");
   if (result == 0) {
     addLine(sharedState, "stopped.");
   } else {
-    addLine(sharedState, "nothing stopped, no running mpremote run found");
+    addLine(sharedState, "nothing stopped, no running mpremote found");
   }
 }
 
@@ -58,10 +62,6 @@ void selectAnAction(SharedState &sharedState,
                     const std::vector<Action> &actions, int selAction,
                     std::thread &worker) {
   if (actions.at(selAction).label == "stop") {
-    if (!sharedState.busy) {
-      addLine(sharedState, "nothing to stop.");
-      return;
-    }
     stopCommand(sharedState);
     return;
   }
