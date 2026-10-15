@@ -17,7 +17,7 @@
 
 int main() {
   try {
-    std::vector<Action> actions = parseActions("actions.json");
+    std::vector<Action> actions = parseActions();
     int selAction = 0;
     Status status = {std::filesystem::current_path(), false,
                      FilesState::Unknown};

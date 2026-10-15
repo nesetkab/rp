@@ -1,4 +1,5 @@
 #include "StatusCheck.hpp"
+#include "Config.hpp"
 
 void checkDeviceFound(Status &status) {
   namespace fs = std::filesystem;
@@ -9,7 +10,7 @@ void checkDeviceFound(Status &status) {
   if (ec)
     return;
   for (const fs::directory_entry &entry : it) {
-    if (entry.path().filename().string().rfind("cu.usbmodem", 0) == 0) {
+    if (entry.path().filename().string().rfind(getPrefix(), 0) == 0) {
       status.deviceFound = true;
       break;
     }

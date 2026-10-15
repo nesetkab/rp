@@ -3,4 +3,5 @@
 #include <string>
 #include <vector>
 
-std::vector<Action> parseActions(std::string path);
+std::vector<Action> parseActions();
+std::string getPrefix();

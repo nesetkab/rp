@@ -4,8 +4,9 @@
 #include <vector>
 
 using json = nlohmann::json;
+std::string path = "config.json";
 
-std::vector<Action> parseActions(std::string path) {
+std::vector<Action> parseActions() {
   std::ifstream in(path);
   json config = json::parse(in);
   std::vector<Action> actions;
@@ -27,4 +28,11 @@ std::vector<Action> parseActions(std::string path) {
     actions.push_back({label, key, command, kind});
   }
   return actions;
+}
+
+std::string getPrefix() {
+  std::ifstream in(path);
+  json config = json::parse(in);
+  std::string prefix = config.at("devicePrefix").get<std::string>();
+  return prefix;
 }
