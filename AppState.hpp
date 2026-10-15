@@ -8,11 +8,13 @@
 
 enum class FilesState { Unknown, Deployed, Changed };
 
+enum class ActionKind { Normal, Interactive, Deploy, Stop };
+
 struct Action {
   std::string label;
   char key;
   std::string command;
-  bool interactive;
+  ActionKind actionKind = ActionKind::Normal;
 };
 
 struct Status {

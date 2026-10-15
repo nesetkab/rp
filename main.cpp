@@ -16,16 +16,15 @@
 int main() {
   try {
     std::vector<Action> actions = {
-        {"run", 'r', "make run", false},
-        {"deploy", 'd', "make deploy", false},
-        {"repl", 'p', "make repl", true},
-        {"ls", 'l', "make ls", false},
-        {"reset", 'b', "make reset", false},
-        {"stop", 's', "", false},
+        {"run", 'r', "make run"},
+        {"deploy", 'd', "make deploy", ActionKind::Deploy},
+        {"repl", 'p', "make repl", ActionKind::Interactive},
+        {"ls", 'l', "make ls"},
+        {"reset", 'b', "make reset"},
+        {"stop", 's', "", ActionKind::Stop},
         {"loop", 't',
-         "echo mpremote run test; while true; do echo tick; sleep 1; done",
-         false},
-        {"just ls", 'o', "ls", false}};
+         "echo mpremote run test; while true; do echo tick; sleep 1; done"},
+        {"just ls", 'o', "ls"}};
     int selAction = 0;
     Status status = {std::filesystem::current_path(), false,
                      FilesState::Unknown};
@@ -93,7 +92,7 @@ int main() {
         case KEY_ENTER:
         case ' ':
           if (!actions.empty()) {
-            selectAnAction(sharedState, actions, selAction, worker, winA.get());
+            selectAnAction(sharedState, actions, selAction, worker);
           }
           break;
 
@@ -101,8 +100,7 @@ int main() {
           for (size_t i = 0; i < actions.size(); i++) {
             if (actions.at(i).key == key) {
               selAction = static_cast<int>(i);
-              selectAnAction(sharedState, actions, selAction, worker,
-                             winA.get());
+              selectAnAction(sharedState, actions, selAction, worker);
               break;
             }
           }
