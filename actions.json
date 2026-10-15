@@ -1,0 +1,39 @@
+{
+  "path": ".",
+  "devicePrefix": "cu.usbmodem",
+  "actions": [
+    {
+      "label": "run",
+      "key": "r",
+      "command": "make run"
+    },
+    {
+      "label": "deploy",
+      "key": "d",
+      "command": "make deploy",
+      "kind": "deploy"
+    },
+    {
+      "label": "repl",
+      "key": "p",
+      "command": "make repl",
+      "kind": "interactive"
+    },
+    {
+      "label": "ls",
+      "key": "l",
+      "command": "make ls"
+    },
+    {
+      "label": "reset",
+      "key": "b",
+      "command": "make reset"
+    },
+    {
+      "label": "stop",
+      "key": "s",
+      "command": "",
+      "kind": "stop"
+    }
+  ]
+}

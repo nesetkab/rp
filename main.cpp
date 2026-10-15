@@ -1,4 +1,5 @@
 #include "AppState.hpp"
+#include "Config.hpp"
 #include "Panel.hpp"
 #include "Runner.hpp"
 #include "StatusCheck.hpp"
@@ -9,22 +10,14 @@
 #include <iostream>
 #include <mutex>
 #include <ncurses.h>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <thread>
 #include <vector>
 
 int main() {
   try {
-    std::vector<Action> actions = {
-        {"run", 'r', "make run"},
-        {"deploy", 'd', "make deploy", ActionKind::Deploy},
-        {"repl", 'p', "make repl", ActionKind::Interactive},
-        {"ls", 'l', "make ls"},
-        {"reset", 'b', "make reset"},
-        {"stop", 's', "", ActionKind::Stop},
-        {"loop", 't',
-         "echo mpremote run test; while true; do echo tick; sleep 1; done"},
-        {"just ls", 'o', "ls"}};
+    std::vector<Action> actions = parseActions("actions.json");
     int selAction = 0;
     Status status = {std::filesystem::current_path(), false,
                      FilesState::Unknown};

@@ -24,15 +24,13 @@ void setResult(SharedState &sharedState, const std::string &label, bool passed,
                bool isDeploy,
                std::filesystem::file_time_type deployTime =
                    std::filesystem::file_time_type{}) {
-  {
-    std::lock_guard<std::mutex> lock(sharedState.mutex);
-    sharedState.result.resultPassed = passed;
-    if (isDeploy && passed) {
-      sharedState.lastDeploy = deployTime;
-    }
-    sharedState.result.resultLabel = label;
-    sharedState.result.resultTime = nowText();
+  std::lock_guard<std::mutex> lock(sharedState.mutex);
+  sharedState.result.resultPassed = passed;
+  if (isDeploy && passed) {
+    sharedState.lastDeploy = deployTime;
   }
+  sharedState.result.resultLabel = label;
+  sharedState.result.resultTime = nowText();
 }
 
 void addLine(SharedState &sharedState, const std::string &line) {
@@ -116,8 +114,10 @@ void selectAnAction(SharedState &sharedState,
     return;
   }
   if (actionKind == ActionKind::Interactive) {
+    addLine(sharedState, "repl opened, exit with ctrl-x");
     bool resultPassed = runInteractiveAction(command);
     setResult(sharedState, label, resultPassed, false);
+    return;
   }
 
   addLine(sharedState, command);
