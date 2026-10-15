@@ -12,6 +12,7 @@ struct Action {
   std::string label;
   char key;
   std::string command;
+  bool interactive;
 };
 
 struct Status {
