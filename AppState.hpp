@@ -17,6 +17,11 @@ struct Action {
   ActionKind actionKind = ActionKind::Normal;
 };
 
+struct Config {
+  std::vector<Action> actions;
+  std::string devicePrefix;
+};
+
 struct Status {
   std::string path;
   bool deviceFound = false;

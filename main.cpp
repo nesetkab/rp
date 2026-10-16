@@ -15,15 +15,33 @@
 #include <thread>
 #include <vector>
 
+void opend(WINDOW *w) {
+  keypad(w, TRUE);
+  wtimeout(w, 100);
+}
+
+void drawEverything(const std::array<Panel *, 3> &windows, Status &status,
+                    SharedState &sharedState, std::vector<Action> actions,
+                    int selAction, Config &config) {
+  checkStatus(status, sharedState, config.devicePrefix);
+  drawActions(windows.at(0)->get(), actions, selAction);
+  {
+    std::lock_guard<std::mutex> lock(sharedState.mutex);
+    drawLogs(windows.at(1)->get(), sharedState.lines);
+    drawStatus(windows.at(2)->get(), status, sharedState);
+  }
+}
+
 int main() {
   try {
-    std::vector<Action> actions = parseActions();
+    std::string configPath = "config.json";
+    Config config = loadConfig(configPath);
+    std::vector<Action> actions = config.actions;
     int selAction = 0;
     Status status = {std::filesystem::current_path(), false,
                      FilesState::Unknown};
     SharedState sharedState;
     std::thread worker;
-
     Terminal terminal;
 
     // make the three windows
@@ -35,23 +53,15 @@ int main() {
     Panel winS(rows - 2 * thirds, cols, 2 * thirds, 0, "status");
     std::array<Panel *, 3> windows = {&winA, &winL, &winS};
 
-    keypad(winA.get(), TRUE);
+    opend(winA.get());
     bool dash = true;
-    wtimeout(winA.get(), 100);
 
     while (dash) {
       for (Panel *p : windows) {
         p->drawFrame();
       }
 
-      checkStatus(status, sharedState);
-
-      drawActions(winA.get(), actions, selAction);
-      {
-        std::lock_guard<std::mutex> lock(sharedState.mutex);
-        drawLogs(winL.get(), sharedState.lines);
-        drawStatus(winS.get(), status, sharedState);
-      }
+      drawEverything(windows, status, sharedState, actions, selAction, config);
 
       for (Panel *p : windows) {
         wnoutrefresh(p->get());

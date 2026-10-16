@@ -1,7 +1,8 @@
 #include "StatusCheck.hpp"
 #include "Config.hpp"
+#include <string>
 
-void checkDeviceFound(Status &status) {
+void checkDeviceFound(Status &status, std::string devicePrefix) {
   namespace fs = std::filesystem;
   fs::path dev = "/dev";
   status.deviceFound = false;
@@ -10,7 +11,7 @@ void checkDeviceFound(Status &status) {
   if (ec)
     return;
   for (const fs::directory_entry &entry : it) {
-    if (entry.path().filename().string().rfind(getPrefix(), 0) == 0) {
+    if (entry.path().filename().string().rfind(devicePrefix, 0) == 0) {
       status.deviceFound = true;
       break;
     }
@@ -38,12 +39,13 @@ void checkFilesChanged(Status &status,
   status.filesFound = FilesState::Deployed;
 }
 
-void checkStatus(Status &status, SharedState &sharedState) {
+void checkStatus(Status &status, SharedState &sharedState,
+                 std::string devicePrefix) {
   auto now = std::chrono::steady_clock::now();
   auto elapsed = now - status.lastCheck;
   if (elapsed >= std::chrono::seconds(1)) {
     status.lastCheck = now;
-    checkDeviceFound(status);
+    checkDeviceFound(status, devicePrefix);
     std::filesystem::file_time_type deployTime;
     {
       std::lock_guard<std::mutex> lock(sharedState.mutex);

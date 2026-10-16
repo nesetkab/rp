@@ -1,3 +1,4 @@
+#include "Config.hpp"
 #include "AppState.hpp"
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -6,9 +7,7 @@
 using json = nlohmann::json;
 std::string path = "config.json";
 
-std::vector<Action> parseActions() {
-  std::ifstream in(path);
-  json config = json::parse(in);
+std::vector<Action> parseActions(json config) {
   std::vector<Action> actions;
 
   for (const json &item : config.at("actions")) {
@@ -30,9 +29,14 @@ std::vector<Action> parseActions() {
   return actions;
 }
 
-std::string getPrefix() {
-  std::ifstream in(path);
-  json config = json::parse(in);
+std::string getPrefix(json config) {
+
   std::string prefix = config.at("devicePrefix").get<std::string>();
   return prefix;
+}
+
+Config loadConfig(const std::string &path) {
+  std::ifstream in(path);
+  json config = json::parse(in);
+  return {parseActions(config), getPrefix(config)};
 }

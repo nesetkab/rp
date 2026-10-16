@@ -1,8 +1,5 @@
 #pragma once
 #include "AppState.hpp"
-#include <chrono>
-#include <filesystem>
-#include <mutex>
-#include <system_error>
 
-void checkStatus(Status &status, SharedState &sharedState);
+void checkStatus(Status &status, SharedState &sharedState,
+                 std::string devicePrefix);
