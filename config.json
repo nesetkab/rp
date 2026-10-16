@@ -32,8 +32,11 @@
     {
       "label": "stop",
       "key": "s",
-      "command": "",
       "kind": "stop"
+    },
+    {
+      "label": "meow",
+      "key": "b"
     }
   ]
 }
