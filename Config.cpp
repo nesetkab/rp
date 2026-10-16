@@ -5,9 +5,8 @@
 #include <vector>
 
 using json = nlohmann::json;
-std::string path = "config.json";
 
-std::vector<Action> parseActions(json config) {
+std::vector<Action> parseActions(const json &config) {
   std::vector<Action> actions;
 
   for (const json &item : config.at("actions")) {
@@ -29,8 +28,7 @@ std::vector<Action> parseActions(json config) {
   return actions;
 }
 
-std::string getPrefix(json config) {
-
+std::string getPrefix(const json &config) {
   std::string prefix = config.at("devicePrefix").get<std::string>();
   return prefix;
 }

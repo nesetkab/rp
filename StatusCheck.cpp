@@ -1,8 +1,7 @@
 #include "StatusCheck.hpp"
-#include "Config.hpp"
 #include <string>
 
-void checkDeviceFound(Status &status, std::string devicePrefix) {
+void checkDeviceFound(Status &status, const std::string &devicePrefix) {
   namespace fs = std::filesystem;
   fs::path dev = "/dev";
   status.deviceFound = false;
@@ -40,7 +39,7 @@ void checkFilesChanged(Status &status,
 }
 
 void checkStatus(Status &status, SharedState &sharedState,
-                 std::string devicePrefix) {
+                 const std::string &devicePrefix) {
   auto now = std::chrono::steady_clock::now();
   auto elapsed = now - status.lastCheck;
   if (elapsed >= std::chrono::seconds(1)) {
