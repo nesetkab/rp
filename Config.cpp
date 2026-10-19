@@ -32,7 +32,7 @@ std::vector<Action> parseActions(const json &config) {
     if (found == kinds.end()) {
       std::string accK;
       for (const auto &pair : kinds)
-        accK += pair.first + ", ";
+        accK += accK.empty() ? pair.first : ", " + pair.first;
       throw std::runtime_error("config error: \"" + label +
                                "\" has an incorrect kind \"" + kindS +
                                "\". accepted kinds are: " + accK);

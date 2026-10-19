@@ -1,5 +1,6 @@
 #include "View.hpp"
 #include "Colors.hpp"
+#include <algorithm>
 #include <ncurses.h>
 #include <string>
 #include <vector>
