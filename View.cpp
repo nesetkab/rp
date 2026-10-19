@@ -12,9 +12,11 @@ void drawColoredLine(WINDOW *w, int row, const ColoredLine &coloredLine) {
   wattroff(w, COLOR_PAIR(coloredLine.color));
 }
 
-ColoredLine drawPath(const Status &status) { return {status.path, PAIR_NONE}; }
+ColoredLine getPathLine(const Status &status) {
+  return {status.path, PAIR_NONE};
+}
 
-ColoredLine drawResult(const SharedState &sharedState) {
+ColoredLine getResultLine(const SharedState &sharedState) {
   if (sharedState.result.resultLabel.empty()) {
     return {"no command yet", PAIR_NONE};
   }
@@ -25,19 +27,19 @@ ColoredLine drawResult(const SharedState &sharedState) {
   return {label, color};
 }
 
-ColoredLine drawBusy(const SharedState &sharedState) {
+ColoredLine getBusyLine(const SharedState &sharedState) {
   std::string label = sharedState.busy ? "busy" : "free";
   ColorPairs color = sharedState.busy ? PAIR_WARN : PAIR_GOOD;
   return {label, color};
 }
 
-ColoredLine drawDevice(const Status &status) {
+ColoredLine getDeviceLine(const Status &status) {
   std::string label = status.deviceFound ? "found" : "not found";
   ColorPairs color = status.deviceFound ? PAIR_GOOD : PAIR_ERROR;
   return {label, color};
 }
 
-ColoredLine drawFiles(const Status &status) {
+ColoredLine getFilesLine(const Status &status) {
   std::string label = "unknown";
   ColorPairs color = PAIR_NONE;
   switch (status.filesFound) {
@@ -82,8 +84,8 @@ void drawLogs(WINDOW *w, const std::vector<std::string> &logLines) {
 void drawStatus(WINDOW *w, const Status &status,
                 const SharedState &sharedState) {
   std::vector<ColoredLine> statuses = {
-      drawPath(status), drawResult(sharedState), drawBusy(sharedState),
-      drawDevice(status), drawFiles(status)};
+      getPathLine(status), getResultLine(sharedState), getBusyLine(sharedState),
+      getDeviceLine(status), getFilesLine(status)};
   for (size_t i = 0; i < statuses.size(); i++) {
     drawColoredLine(w, static_cast<int>(i) + 1, statuses.at(i));
   }

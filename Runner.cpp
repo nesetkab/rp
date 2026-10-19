@@ -41,7 +41,7 @@ void addLine(SharedState &sharedState, const std::string &line) {
 bool runNormalAction(SharedState &sharedState, const std::string &command) {
   FILE *pipe = popen((command + " 2>&1").c_str(), "r");
   if (pipe == nullptr) {
-    addLine(sharedState, "err, pipe is nullptr. command did not start");
+    addLine(sharedState, "ERROR: pipe is nullptr. command did not start");
     return false;
   }
 
@@ -62,10 +62,7 @@ bool runNormalAction(SharedState &sharedState, const std::string &command) {
   addLine(sharedState, "finished! exit code " + std::to_string(exitcode));
   addLine(sharedState, " ");
 
-  if (exitcode == 0) {
-    return true;
-  }
-  return false;
+  return exitcode == 0;
 }
 
 bool runInteractiveAction(const std::string &command) {
@@ -79,20 +76,17 @@ bool runInteractiveAction(const std::string &command) {
     exitcode = WEXITSTATUS(status);
   }
 
-  if (exitcode == 0) {
-    return true;
-  }
-  return false;
+  return exitcode == 0;
 }
 
 void stopCommand(SharedState &sharedState) {
   if (!sharedState.busy) {
-    addLine(sharedState, "nothing to stop.");
+    addLine(sharedState, "nothing to stop");
     return;
   }
   int result = std::system("pkill -f \"[m]premote\" > /dev/null 2>&1");
   if (result == 0) {
-    addLine(sharedState, "stopped.");
+    addLine(sharedState, "stopped");
   } else {
     addLine(sharedState, "nothing stopped, no running mpremote found");
   }
@@ -108,12 +102,10 @@ void selectAnAction(SharedState &sharedState,
   if (actionKind == ActionKind::Stop) {
     stopCommand(sharedState);
     return;
-  }
-  if (sharedState.busy) {
+  } else if (sharedState.busy) {
     addLine(sharedState, "busy, wait for the current command");
     return;
-  }
-  if (actionKind == ActionKind::Interactive) {
+  } else if (actionKind == ActionKind::Interactive) {
     addLine(sharedState, "repl opened, exit with ctrl-x");
     bool resultPassed = runInteractiveAction(command);
     setResult(sharedState, label, resultPassed, false);

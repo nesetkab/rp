@@ -3,6 +3,7 @@
 
 void checkDeviceFound(Status &status, const std::string &devicePrefix) {
   namespace fs = std::filesystem;
+  // only works on macos :c
   fs::path dev = "/dev";
   status.deviceFound = false;
   std::error_code ec;

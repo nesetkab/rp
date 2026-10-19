@@ -1,14 +1,19 @@
 #include "Config.hpp"
 #include "AppState.hpp"
 #include <fstream>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <vector>
 
 using json = nlohmann::json;
 
 std::vector<Action> parseActions(const json &config) {
+  const std::map<std::string, ActionKind> kinds = {
+      {"normal", ActionKind::Normal},
+      {"interactive", ActionKind::Interactive},
+      {"stop", ActionKind::Stop},
+      {"deploy", ActionKind::Deploy}};
   std::vector<Action> actions;
-
   for (const json &item : config.at("actions")) {
     std::string label = item.at("label").get<std::string>();
     std::string keyS = item.at("key").get<std::string>();
@@ -21,22 +26,14 @@ std::vector<Action> parseActions(const json &config) {
     }
     std::string command = item.value("command", "");
     std::string kindS = item.value("kind", "normal");
-    ActionKind kind;
-    if (kindS == "interactive") {
-      kind = ActionKind::Interactive;
-    } else if (kindS == "stop") {
-      kind = ActionKind::Stop;
-    } else if (kindS == "deploy") {
-      kind = ActionKind::Deploy;
-    } else if (kindS == "normal") {
-      kind = ActionKind::Normal;
-    } else {
-      throw std::runtime_error("config error: " + label +
-                               " has an incorrect kind \"" + kindS +
-                               "\". accepted kids are: "
+    auto found = kinds.find(kindS);
+    if (found == kinds.end()) {
+      throw std::runtime_error("config error: \"" + label +
+                               "\" has an incorrect kind \"" + kindS +
+                               "\". accepted kinds are: "
                                "interactive, stop, deploy, and normal.");
     }
-
+    ActionKind kind = found->second;
     actions.push_back({label, keyS[0], command, kind});
   }
   return actions;
@@ -48,11 +45,15 @@ std::string getPrefix(const json &config) {
 }
 
 Config loadConfig(const std::string &path) {
-  std::ifstream in(path);
-  if (!in) {
-    throw std::runtime_error("config error: path \"" + path +
-                             "\" does not exist");
+  try {
+    std::ifstream in(path);
+    if (!in) {
+      throw std::runtime_error("config error: path \"" + path +
+                               "\" could not open");
+    }
+    json config = json::parse(in);
+    return {parseActions(config), getPrefix(config)};
+  } catch (const nlohmann::json::exception &e) {
+    throw std::runtime_error(std::string("config error: ") + e.what());
   }
-  json config = json::parse(in);
-  return {parseActions(config), getPrefix(config)};
 }
