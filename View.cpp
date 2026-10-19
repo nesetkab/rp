@@ -1,4 +1,8 @@
 #include "View.hpp"
+#include "Colors.hpp"
+#include <ncurses.h>
+#include <string>
+#include <vector>
 
 struct ColoredLine {
   std::string label;
@@ -64,10 +68,10 @@ void drawActions(WINDOW *w, const std::vector<Action> &actions, int sel) {
     if (in >= maxy - 2)
       break;
     if (in == sel)
-      wattron(w, A_REVERSE | A_BOLD);
+      wattron(w, A_REVERSE | A_ITALIC);
     mvwprintw(w, in + 1, 2, "[%c] %s", actions.at(i).key,
               actions.at(i).label.c_str());
-    wattroff(w, A_REVERSE | A_BOLD);
+    wattroff(w, A_REVERSE | A_ITALIC);
   }
 }
 

@@ -106,7 +106,7 @@ void selectAnAction(SharedState &sharedState,
     addLine(sharedState, "busy, wait for the current command");
     return;
   } else if (actionKind == ActionKind::Interactive) {
-    addLine(sharedState, "repl opened, exit with ctrl-x");
+    addLine(sharedState, label + " opened, exit with ctrl-x or ctrl-]");
     bool resultPassed = runInteractiveAction(command);
     setResult(sharedState, label, resultPassed, false);
     return;

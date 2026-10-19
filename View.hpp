@@ -1,8 +1,5 @@
 #pragma once
 #include "AppState.hpp"
-#include "Colors.hpp"
-#include <algorithm>
-#include <chrono>
 #include <ncurses.h>
 #include <string>
 #include <vector>

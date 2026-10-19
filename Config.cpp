@@ -3,6 +3,8 @@
 #include <fstream>
 #include <map>
 #include <nlohmann/json.hpp>
+#include <stdexcept>
+#include <string>
 #include <vector>
 
 using json = nlohmann::json;
@@ -28,10 +30,12 @@ std::vector<Action> parseActions(const json &config) {
     std::string kindS = item.value("kind", "normal");
     auto found = kinds.find(kindS);
     if (found == kinds.end()) {
+      std::string accK;
+      for (const auto &pair : kinds)
+        accK += pair.first + ", ";
       throw std::runtime_error("config error: \"" + label +
                                "\" has an incorrect kind \"" + kindS +
-                               "\". accepted kinds are: "
-                               "interactive, stop, deploy, and normal.");
+                               "\". accepted kinds are: " + accK);
     }
     ActionKind kind = found->second;
     actions.push_back({label, keyS[0], command, kind});
@@ -48,8 +52,8 @@ Config loadConfig(const std::string &path) {
   try {
     std::ifstream in(path);
     if (!in) {
-      throw std::runtime_error("config error: path \"" + path +
-                               "\" could not open");
+      throw std::runtime_error("config error: could not open config file \"" +
+                               path + "\"");
     }
     json config = json::parse(in);
     return {parseActions(config), getPrefix(config)};
