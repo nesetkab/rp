@@ -35,8 +35,7 @@ void drawEverything(const std::array<Panel *, 3> &windows, Status &status,
 
 int main(int argc, char *argv[]) {
   try {
-    std::string configPath;
-    configPath = "config.json";
+    std::string configPath = "config.json";
     if (argc > 1) {
       configPath = argv[1];
     }
@@ -86,11 +85,11 @@ int main(int argc, char *argv[]) {
         case 'R':
           try {
             config = loadConfig(configPath);
-            if (selAction >= config.actions.size()) {
+            if (selAction >= static_cast<int>(config.actions.size())) {
               selAction = 0;
             }
             addLine(sharedState, "config reloaded");
-          } catch (std::runtime_error e) {
+          } catch (const std::runtime_error &e) {
             addLine(sharedState,
                     "reload config error: " + std::string(e.what()));
           }

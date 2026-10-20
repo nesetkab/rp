@@ -1,5 +1,4 @@
 {
-  "path": ".",
   "devicePrefix": "cu.usbmodem",
   "actions": [
     {

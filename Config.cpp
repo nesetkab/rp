@@ -14,8 +14,7 @@ std::vector<Action> parseActions(const json &config) {
       {"normal", ActionKind::Normal},
       {"interactive", ActionKind::Interactive},
       {"stop", ActionKind::Stop},
-      {"deploy", ActionKind::Deploy},
-      {"reload", ActionKind::Reload}};
+      {"deploy", ActionKind::Deploy}};
   std::vector<Action> actions;
   for (const json &item : config.at("actions")) {
     std::string label = item.at("label").get<std::string>();
@@ -24,8 +23,9 @@ std::vector<Action> parseActions(const json &config) {
       throw std::runtime_error("config error: \"" + label +
                                "\" should only have 1 letter for key");
     } else if (keyS[0] == 'q' || keyS[0] == 'R') {
-      throw std::runtime_error("config error: \"" + label +
-                               "\" shouldn't use the letter q. q is quit.");
+      throw std::runtime_error(
+          "config error: \"" + label +
+          "\" shouldn't use the letter q (quit) or R (reload config)");
     }
     std::string command = item.value("command", "");
     std::string kindS = item.value("kind", "normal");
