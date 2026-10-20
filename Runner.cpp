@@ -1,5 +1,6 @@
 #include "Runner.hpp"
 #include "AppState.hpp"
+#include "Config.hpp"
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>

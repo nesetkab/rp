@@ -11,6 +11,7 @@
 #include <mutex>
 #include <ncurses.h>
 #include <nlohmann/json.hpp>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
@@ -32,9 +33,14 @@ void drawEverything(const std::array<Panel *, 3> &windows, Status &status,
   }
 }
 
-int main() {
+int main(int argc, char *argv[]) {
   try {
-    std::string configPath = "config.json";
+    std::string configPath;
+    configPath = "config.json";
+    if (argc > 1) {
+      configPath = argv[1];
+    }
+
     Config config = loadConfig(configPath);
     int selAction = 0;
     Status status = {std::filesystem::current_path(), false,
@@ -75,6 +81,19 @@ int main() {
         case 'q':
           stopCommand(sharedState);
           dash = false;
+          break;
+
+        case 'R':
+          try {
+            config = loadConfig(configPath);
+            if (selAction >= config.actions.size()) {
+              selAction = 0;
+            }
+            addLine(sharedState, "config reloaded");
+          } catch (std::runtime_error e) {
+            addLine(sharedState,
+                    "reload config error: " + std::string(e.what()));
+          }
           break;
 
         case KEY_UP:
