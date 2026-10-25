@@ -19,12 +19,13 @@ void drawColoredLine(WINDOW *w, int row, const ColoredLine &coloredLine) {
 
 void drawColoredLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines) {
   int maxl = std::max(0, getmaxx(w) - 3);
-  int row = 1;
-  for (const ColoredLine coloredLine : coloredLines) {
+  int ic = maxl / coloredLines.size();
+  int row = 2;
+  for (const ColoredLine &coloredLine : coloredLines) {
     wattron(w, COLOR_PAIR(coloredLine.color));
     mvwprintw(w, 1, row, "%.*s", maxl, coloredLine.label.c_str());
     wattroff(w, COLOR_PAIR(coloredLine.color));
-    row += coloredLine.label.size() + 1;
+    row += ic;
   }
 }
 

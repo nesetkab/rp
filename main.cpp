@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
       if (static_cast<int>(ac.label.length()) > maxAcL)
         maxAcL = static_cast<int>(ac.label.length());
     }
-    maxAcL += 10; // margin for border n shiiii
+    maxAcL += 8; // margin for border n shiiii
     Layout layout = getLayout(rows, cols, maxAcL);
     Panel winH(layout.header.height, layout.header.width, layout.header.row,
                layout.header.col, "header");
