@@ -1,5 +1,6 @@
 #include "AppState.hpp"
 #include "Config.hpp"
+#include "Layout.hpp"
 #include "Panel.hpp"
 #include "Runner.hpp"
 #include "StatusCheck.hpp"
@@ -21,24 +22,21 @@ void setupInput(WINDOW *w) {
   wtimeout(w, 100);
 }
 
-void drawEverything(const std::array<Panel *, 3> &windows, Status &status,
+void drawEverything(const std::array<Panel *, 4> &windows, Status &status,
                     SharedState &sharedState, const Config &config,
                     int selAction) {
   checkStatus(status, sharedState, config.devicePrefix);
-  drawActions(windows.at(0)->get(), config.actions, selAction);
+  drawActions(windows.at(1)->get(), config.actions, selAction);
   {
     std::lock_guard<std::mutex> lock(sharedState.mutex);
-    drawLogs(windows.at(1)->get(), sharedState.lines);
-    drawStatus(windows.at(2)->get(), status, sharedState);
+    drawLogs(windows.at(2)->get(), sharedState.lines);
+    drawStatus(windows.at(3)->get(), status, sharedState);
   }
 }
 
 int main(int argc, char *argv[]) {
   try {
-    std::string configPath = "config.json";
-    if (argc > 1) {
-      configPath = argv[1];
-    }
+    std::string configPath = argc > 1 ? argv[1] : "config.json";
 
     Config config = loadConfig(configPath);
     int selAction = 0;
@@ -49,13 +47,24 @@ int main(int argc, char *argv[]) {
     Terminal terminal;
 
     // make the three windows
-    int rows, cols = 0;
+    int rows = 0, cols = 0;
     getmaxyx(stdscr, rows, cols);
-    int thirds = rows / 3;
-    Panel winA(thirds, cols, 0, 0, "actions");
-    Panel winL(thirds, cols, thirds, 0, "logs");
-    Panel winS(rows - 2 * thirds, cols, 2 * thirds, 0, "status");
-    std::array<Panel *, 3> windows = {&winA, &winL, &winS};
+    int maxAcL = 0;
+    for (Action ac : config.actions) {
+      if (static_cast<int>(ac.label.length()) > maxAcL)
+        maxAcL = static_cast<int>(ac.label.length());
+    }
+    maxAcL += 10; // margin for border n shiiii
+    Layout layout = getLayout(rows, cols, maxAcL);
+    Panel winH(layout.header.height, layout.header.width, layout.header.row,
+               layout.header.col, "header");
+    Panel winA(layout.actions.height, layout.actions.width, layout.actions.row,
+               layout.actions.col, "actions");
+    Panel winL(layout.log.height, layout.log.width, layout.log.row,
+               layout.log.col, "logs");
+    Panel winS(layout.status.height, layout.status.width, layout.status.row,
+               layout.status.col, "status");
+    std::array<Panel *, 4> windows = {&winH, &winA, &winL, &winS};
 
     setupInput(winA.get());
     bool dash = true;
@@ -114,6 +123,21 @@ int main(int argc, char *argv[]) {
           if (!config.actions.empty()) {
             selectAnAction(sharedState, config.actions, selAction, worker);
           }
+          break;
+
+        case KEY_RESIZE:
+          getmaxyx(stdscr, rows, cols);
+          maxAcL = 0;
+          for (Action ac : config.actions) {
+            if (static_cast<int>(ac.label.length()) > maxAcL)
+              maxAcL = static_cast<int>(ac.label.length());
+          }
+          maxAcL += 10; // margin for border n shiiii
+          layout = getLayout(rows, cols, maxAcL);
+          winA.resize(layout.actions);
+          winL.resize(layout.log);
+          winS.resize(layout.status);
+          clearok(curscr, TRUE);
           break;
 
         default:

@@ -1,8 +1,10 @@
 #include "Terminal.hpp"
 #include "Colors.hpp"
+#include <clocale>
 #include <ncurses.h>
 
 Terminal::Terminal() {
+  setlocale(LC_ALL, "");
   initscr();
   cbreak();
   noecho();

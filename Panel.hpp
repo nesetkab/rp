@@ -1,4 +1,5 @@
 #pragma once
+#include "Layout.hpp"
 #include <ncurses.h>
 #include <string>
 
@@ -10,6 +11,7 @@ public:
   Panel &operator=(const Panel &) = delete;
   void drawFrame();
   WINDOW *get() const;
+  void resize(const Rect &r);
 
 private:
   WINDOW *win;

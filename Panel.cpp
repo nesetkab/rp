@@ -1,4 +1,5 @@
 #include "Panel.hpp"
+#include "Layout.hpp"
 
 Panel::Panel(int h, int w, int srow, int scol, const std::string &t)
     : win(newwin(h, w, srow, scol)), title(t) {}
@@ -12,3 +13,8 @@ void Panel::drawFrame() {
 }
 
 WINDOW *Panel::get() const { return win; }
+
+void Panel::resize(const Rect &r) {
+  wresize(win, r.height, r.width);
+  mvwin(win, r.row, r.col);
+}

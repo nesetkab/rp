@@ -17,6 +17,17 @@ void drawColoredLine(WINDOW *w, int row, const ColoredLine &coloredLine) {
   wattroff(w, COLOR_PAIR(coloredLine.color));
 }
 
+void drawColoredLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines) {
+  int maxl = std::max(0, getmaxx(w) - 3);
+  int row = 1;
+  for (const ColoredLine coloredLine : coloredLines) {
+    wattron(w, COLOR_PAIR(coloredLine.color));
+    mvwprintw(w, 1, row, "%.*s", maxl, coloredLine.label.c_str());
+    wattroff(w, COLOR_PAIR(coloredLine.color));
+    row += coloredLine.label.size() + 1;
+  }
+}
+
 ColoredLine getPathLine(const Status &status) {
   return {status.path, PAIR_NONE};
 }
@@ -91,7 +102,5 @@ void drawStatus(WINDOW *w, const Status &status,
   std::vector<ColoredLine> statuses = {
       getPathLine(status), getResultLine(sharedState), getBusyLine(sharedState),
       getDeviceLine(status), getFilesLine(status)};
-  for (size_t i = 0; i < statuses.size(); i++) {
-    drawColoredLine(w, static_cast<int>(i) + 1, statuses.at(i));
-  }
+  drawColoredLines(w, statuses);
 }
