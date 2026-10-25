@@ -19,13 +19,21 @@ void drawColoredLine(WINDOW *w, int row, const ColoredLine &coloredLine) {
 
 void drawColoredLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines) {
   int maxl = std::max(0, getmaxx(w) - 3);
-  int ic = maxl / coloredLines.size();
-  int row = 2;
+  int used = 0;
+  for (const ColoredLine &coloredLine : coloredLines) {
+    used += coloredLine.label.size();
+  }
+  int free = maxl - used;
+  int gaps = coloredLines.size() - 1 > 0 ? coloredLines.size() - 1 : 1;
+  int gap = free / gaps;
+  int col = 2;
+  used = free % gaps;
   for (const ColoredLine &coloredLine : coloredLines) {
     wattron(w, COLOR_PAIR(coloredLine.color));
-    mvwprintw(w, 1, row, "%.*s", maxl, coloredLine.label.c_str());
+    mvwprintw(w, 1, col, "%.*s", maxl, coloredLine.label.c_str());
     wattroff(w, COLOR_PAIR(coloredLine.color));
-    row += ic;
+    col += coloredLine.label.size() + gap + (used > 0 ? 1 : 0);
+    used -= used > 0 ? 1 : 0;
   }
 }
 
@@ -101,7 +109,7 @@ void drawLogs(WINDOW *w, const std::vector<std::string> &logLines) {
 void drawStatus(WINDOW *w, const Status &status,
                 const SharedState &sharedState) {
   std::vector<ColoredLine> statuses = {
-      getPathLine(status), getResultLine(sharedState), getBusyLine(sharedState),
+      getResultLine(sharedState), getBusyLine(sharedState),
       getDeviceLine(status), getFilesLine(status)};
   drawColoredLines(w, statuses);
 }
