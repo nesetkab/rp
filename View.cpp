@@ -2,6 +2,7 @@
 #include "AppState.hpp"
 #include "Colors.hpp"
 #include <algorithm>
+#include <cstddef>
 #include <ncurses.h>
 #include <string>
 #include <vector>
@@ -124,7 +125,7 @@ void drawStatus(WINDOW *w, const Status &status,
 void drawHeader(WINDOW *w, const Status &status,
                 const SharedState &sharedState) {
   std::vector<ColoredLine> headers = {getPathLine(status)};
-  for (int i = 0; i < headers.size(); i++) {
-    drawLine(w, i + 1, 2, getInnerWidth(w), headers.at(i));
+  for (size_t i = 0; i < headers.size(); i++) {
+    drawLine(w, static_cast<int>(i) + 1, 2, getInnerWidth(w), headers.at(i));
   }
 }

@@ -7,6 +7,7 @@
 #include "Terminal.hpp"
 #include "View.hpp"
 #include <array>
+#include <exception>
 #include <filesystem>
 #include <iostream>
 #include <mutex>
@@ -35,6 +36,17 @@ void drawEverything(const std::array<Panel *, 4> &windows, Status &status,
   }
 }
 
+void resize(Config config, const std::array<Panel *, 4> w) {
+  int rows = 0, cols = 0;
+  getmaxyx(stdscr, rows, cols);
+  Layout layout = getLayout(rows, cols, config.actions);
+  w.at(0)->resize(layout.header);
+  w.at(1)->resize(layout.actions);
+  w.at(2)->resize(layout.log);
+  w.at(3)->resize(layout.status);
+  clearok(curscr, TRUE);
+}
+
 int main(int argc, char *argv[]) {
   try {
     std::string configPath = argc > 1 ? argv[1] : "config.json";
@@ -50,13 +62,7 @@ int main(int argc, char *argv[]) {
     // make the three windows
     int rows = 0, cols = 0;
     getmaxyx(stdscr, rows, cols);
-    int maxAcL = 0;
-    for (Action ac : config.actions) {
-      if (static_cast<int>(ac.label.length()) > maxAcL)
-        maxAcL = static_cast<int>(ac.label.length());
-    }
-    maxAcL += 8; // margin for border n shiiii
-    Layout layout = getLayout(rows, cols, maxAcL);
+    Layout layout = getLayout(rows, cols, config.actions);
     Panel winH(layout.header.height, layout.header.width, layout.header.row,
                layout.header.col, "header");
     Panel winA(layout.actions.height, layout.actions.width, layout.actions.row,
@@ -98,8 +104,9 @@ int main(int argc, char *argv[]) {
             if (selAction >= static_cast<int>(config.actions.size())) {
               selAction = 0;
             }
+            resize(config, windows);
             addLine(sharedState, "config reloaded");
-          } catch (const std::runtime_error &e) {
+          } catch (const std::exception &e) {
             addLine(sharedState,
                     "reload config error: " + std::string(e.what()));
           }
@@ -127,12 +134,7 @@ int main(int argc, char *argv[]) {
           break;
 
         case KEY_RESIZE:
-          getmaxyx(stdscr, rows, cols);
-          layout = getLayout(rows, cols, maxAcL);
-          winA.resize(layout.actions);
-          winL.resize(layout.log);
-          winS.resize(layout.status);
-          clearok(curscr, TRUE);
+          resize(config, windows);
           break;
 
         default:
