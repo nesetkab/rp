@@ -36,7 +36,7 @@ void drawEverything(const std::array<Panel *, 4> &windows, Status &status,
   }
 }
 
-void resize(Config config, const std::array<Panel *, 4> w) {
+void resize(const Config &config, const std::array<Panel *, 4> w) {
   int rows = 0, cols = 0;
   getmaxyx(stdscr, rows, cols);
   Layout layout = getLayout(rows, cols, config.actions);

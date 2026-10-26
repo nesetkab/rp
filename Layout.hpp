@@ -17,4 +17,4 @@ struct Layout {
   bool showHeader = false;
 };
 
-Layout getLayout(int rows, int cols, std::vector<Action> action);
+Layout getLayout(int rows, int cols, const std::vector<Action> &action);

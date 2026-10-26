@@ -2,8 +2,8 @@
 #include "AppState.hpp"
 #include <algorithm>
 
-Layout getLayout(int rows, int cols, std::vector<Action> action) {
-  int maxAcL = 12;
+Layout getLayout(int rows, int cols, const std::vector<Action> &action) {
+  int maxAcL = 0;
   if (!action.empty()) {
     for (const Action &a : action) {
       if (static_cast<int>(a.label.length()) > maxAcL)
@@ -11,6 +11,7 @@ Layout getLayout(int rows, int cols, std::vector<Action> action) {
     }
     maxAcL += 8; // margin for border n shiiii
   }
+  maxAcL = std::max(12, maxAcL);
 
   const int headerToggleRows = 19, headerH = 8, statusH = 3;
 
