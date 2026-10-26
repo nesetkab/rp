@@ -1,4 +1,5 @@
 #include "View.hpp"
+#include "AppState.hpp"
 #include "Colors.hpp"
 #include <algorithm>
 #include <ncurses.h>
@@ -10,35 +11,41 @@ struct ColoredLine {
   ColorPairs color;
 };
 
-void drawColoredLine(WINDOW *w, int row, const ColoredLine &coloredLine) {
-  int maxl = std::max(0, getmaxx(w) - 3);
+int getInnerWidth(WINDOW *w) { return std::max(0, getmaxx(w) - 4); }
+
+void drawLine(WINDOW *w, int row, int col, int maxl,
+              const ColoredLine &coloredLine) {
   wattron(w, COLOR_PAIR(coloredLine.color));
-  mvwprintw(w, row, 2, "%.*s", maxl, coloredLine.label.c_str());
+  mvwprintw(w, row, col, "%.*s", maxl, coloredLine.label.c_str());
   wattroff(w, COLOR_PAIR(coloredLine.color));
 }
 
-void drawColoredLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines) {
-  int maxl = std::max(0, getmaxx(w) - 3);
-  int used = 0;
+void drawStatusLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines) {
+  int start = 2, free = 0;
+  int width = getInnerWidth(w);
+  int right = start + width;
   for (const ColoredLine &coloredLine : coloredLines) {
-    used += coloredLine.label.size();
+    free += coloredLine.label.size();
   }
-  int free = maxl - used;
-  int gaps = coloredLines.size() - 1 > 0 ? coloredLines.size() - 1 : 1;
-  int gap = free / gaps;
-  int col = 2;
-  used = free % gaps;
+  free = width - free;
+  int gaps = std::max(1, static_cast<int>(coloredLines.size() - 1));
+  int gap = std::max(1, free / gaps);
+  int col = start;
+  int xtracol = free < gaps ? 0 : free % gaps;
   for (const ColoredLine &coloredLine : coloredLines) {
-    wattron(w, COLOR_PAIR(coloredLine.color));
-    mvwprintw(w, 1, col, "%.*s", maxl, coloredLine.label.c_str());
-    wattroff(w, COLOR_PAIR(coloredLine.color));
-    col += coloredLine.label.size() + gap + (used > 0 ? 1 : 0);
-    used -= used > 0 ? 1 : 0;
+    if (right - col <= 0)
+      break;
+    drawLine(w, 1, col, right - col, coloredLine);
+    col += coloredLine.label.size() + gap;
+    if (xtracol > 0) {
+      col++;
+      xtracol--;
+    }
   }
 }
 
 ColoredLine getPathLine(const Status &status) {
-  return {status.path, PAIR_NONE};
+  return {status.path, ColorPairs::PAIR_NONE};
 }
 
 ColoredLine getResultLine(const SharedState &sharedState) {
@@ -100,7 +107,7 @@ void drawLogs(WINDOW *w, const std::vector<std::string> &logLines) {
   int visible = getmaxy(w) - 2;
   int lines = static_cast<int>(logLines.size());
   int start = std::max(0, lines - visible);
-  int maxl = std::max(0, getmaxx(w) - 3);
+  int maxl = getInnerWidth(w);
   for (int i = start; i < lines; i++) {
     mvwprintw(w, i - start + 1, 2, "%.*s", maxl, logLines.at(i).c_str());
   }
@@ -111,5 +118,13 @@ void drawStatus(WINDOW *w, const Status &status,
   std::vector<ColoredLine> statuses = {
       getResultLine(sharedState), getBusyLine(sharedState),
       getDeviceLine(status), getFilesLine(status)};
-  drawColoredLines(w, statuses);
+  drawStatusLines(w, statuses);
+}
+
+void drawHeader(WINDOW *w, const Status &status,
+                const SharedState &sharedState) {
+  std::vector<ColoredLine> headers = {getPathLine(status)};
+  for (int i = 0; i < headers.size(); i++) {
+    drawLine(w, i + 1, 2, getInnerWidth(w), headers.at(i));
+  }
 }

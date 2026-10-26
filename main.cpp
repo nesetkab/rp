@@ -31,6 +31,7 @@ void drawEverything(const std::array<Panel *, 4> &windows, Status &status,
     std::lock_guard<std::mutex> lock(sharedState.mutex);
     drawLogs(windows.at(2)->get(), sharedState.lines);
     drawStatus(windows.at(3)->get(), status, sharedState);
+    drawHeader(windows.at(0)->get(), status, sharedState);
   }
 }
 
@@ -127,12 +128,6 @@ int main(int argc, char *argv[]) {
 
         case KEY_RESIZE:
           getmaxyx(stdscr, rows, cols);
-          maxAcL = 0;
-          for (Action ac : config.actions) {
-            if (static_cast<int>(ac.label.length()) > maxAcL)
-              maxAcL = static_cast<int>(ac.label.length());
-          }
-          maxAcL += 10; // margin for border n shiiii
           layout = getLayout(rows, cols, maxAcL);
           winA.resize(layout.actions);
           winL.resize(layout.log);
