@@ -1,6 +1,7 @@
 #include "View.hpp"
 #include "AppState.hpp"
 #include "Colors.hpp"
+#include "Header.hpp"
 #include <algorithm>
 #include <cstddef>
 #include <ncurses.h>
@@ -124,7 +125,10 @@ void drawStatus(WINDOW *w, const Status &status,
 
 void drawHeader(WINDOW *w, const Status &status,
                 const SharedState &sharedState) {
-  std::vector<ColoredLine> headers = {getPathLine(status)};
+  std::vector<ColoredLine> headers;
+  for (std::string l : getTitle()) {
+    headers.push_back({l, ColorPairs::PAIR_NONE});
+  }
   for (size_t i = 0; i < headers.size(); i++) {
     drawLine(w, static_cast<int>(i) + 1, 2, getInnerWidth(w), headers.at(i));
   }
