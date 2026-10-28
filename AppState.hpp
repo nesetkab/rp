@@ -7,6 +7,11 @@
 #include <string>
 #include <vector>
 
+struct Sparkle {
+  float x, y; // 0<=x,y<=1
+  int phase;
+};
+
 enum class FilesState { Unknown, Deployed, Changed };
 
 enum class ActionKind { Normal, Interactive, Deploy, Stop };

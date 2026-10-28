@@ -2,7 +2,9 @@
 #include "AppState.hpp"
 #include "Colors.hpp"
 #include "Header.hpp"
+#include "Sparkler.hpp"
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <ncurses.h>
 #include <string>
@@ -122,9 +124,27 @@ void drawStatus(WINDOW *w, const Status &status,
   drawStatusLines(w, statuses);
 }
 
-void drawHeader(WINDOW *w, const Status &status,
-                const SharedState &sharedState) {
-  int iconStart = 4, inw = getInnerWidth(w), margin = inw / 10, right = 2 + inw;
+void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
+                const std::vector<Sparkle> &sparkles,
+                std::chrono::steady_clock::time_point startTime) {
+  int inw = getInnerWidth(w),
+      maxSparkles = std::min(((getmaxx(w) * getmaxy(w)) / 40),
+                             static_cast<int>(sparkles.size()));
+  int iconStart = 4, margin = inw / 10, right = 2 + inw;
+
+  auto elapsed = std::chrono::steady_clock::now() - startTime;
+  long long ms =
+      std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+  int step = static_cast<int>(ms / 300);
+
+  for (int i = 0; i < maxSparkles; i++) {
+    Sparkle s = sparkles.at(i);
+    drawLine(w, (1 + s.y * (getmaxy(w) - 2)), (2 + s.x * (right - 2)), 0,
+             {getSparkleString(s.phase, static_cast<int>(ms / 800)),
+              ColorPairs::PAIR_GOOD},
+             true);
+  }
+
   std::vector<ColoredLine> icon = getIcon();
   if (iconStart + getIconWidth() < right) {
     for (size_t i = 0; i < icon.size(); i++) {

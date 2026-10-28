@@ -3,6 +3,7 @@
 #include "Layout.hpp"
 #include "Panel.hpp"
 #include "Runner.hpp"
+#include "Sparkler.hpp"
 #include "StatusCheck.hpp"
 #include "Terminal.hpp"
 #include "View.hpp"
@@ -13,7 +14,6 @@
 #include <mutex>
 #include <ncurses.h>
 #include <nlohmann/json.hpp>
-#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
@@ -25,14 +25,15 @@ void setupInput(WINDOW *w) {
 
 void drawEverything(const std::array<Panel *, 4> &windows, Status &status,
                     SharedState &sharedState, const Config &config,
-                    int selAction) {
+                    const int &selAction, const std::vector<Sparkle> &sparkles,
+                    std::chrono::steady_clock::time_point startTime) {
   checkStatus(status, sharedState, config.devicePrefix);
   drawActions(windows.at(1)->get(), config.actions, selAction);
   {
     std::lock_guard<std::mutex> lock(sharedState.mutex);
     drawLogs(windows.at(2)->get(), sharedState.lines);
     drawStatus(windows.at(3)->get(), status, sharedState);
-    drawHeader(windows.at(0)->get(), status, sharedState);
+    drawHeader(windows.at(0)->get(), status, sharedState, sparkles, startTime);
   }
 }
 
@@ -59,6 +60,9 @@ int main(int argc, char *argv[]) {
     std::thread worker;
     Terminal terminal;
 
+    std::vector<Sparkle> sparkles = getSparkles(getPathLine(status).label);
+    auto startTime = std::chrono::steady_clock::now();
+
     // make the three windows
     int rows = 0, cols = 0;
     getmaxyx(stdscr, rows, cols);
@@ -81,7 +85,8 @@ int main(int argc, char *argv[]) {
         p->drawFrame();
       }
 
-      drawEverything(windows, status, sharedState, config, selAction);
+      drawEverything(windows, status, sharedState, config, selAction, sparkles,
+                     startTime);
 
       for (Panel *p : windows) {
         wnoutrefresh(p->get());
