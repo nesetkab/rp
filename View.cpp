@@ -11,9 +11,13 @@
 int getInnerWidth(WINDOW *w) { return std::max(0, getmaxx(w) - 4); }
 
 void drawLine(WINDOW *w, int row, int col, int maxl,
-              const ColoredLine &coloredLine) {
+              const ColoredLine &coloredLine, bool noLimit = false) {
   wattron(w, COLOR_PAIR(coloredLine.color));
-  mvwprintw(w, row, col, "%.*s", maxl, coloredLine.label.c_str());
+  if (noLimit) {
+    mvwprintw(w, row, col, "%s", coloredLine.label.c_str());
+  } else {
+    mvwprintw(w, row, col, "%.*s", maxl, coloredLine.label.c_str());
+  }
   wattroff(w, COLOR_PAIR(coloredLine.color));
 }
 
@@ -120,15 +124,16 @@ void drawStatus(WINDOW *w, const Status &status,
 
 void drawHeader(WINDOW *w, const Status &status,
                 const SharedState &sharedState) {
-  int iconStart = 2, inw = getInnerWidth(w), margin = inw / 10;
+  int iconStart = 4, inw = getInnerWidth(w), margin = inw / 10, right = 2 + inw;
   std::vector<ColoredLine> icon = getIcon();
-  for (size_t i = 0; i < icon.size(); i++) {
-    drawLine(w, static_cast<int>(i) + iconStart, 4, inw, icon.at(i));
+  if (iconStart + getIconWidth() < right) {
+    for (size_t i = 0; i < icon.size(); i++) {
+      drawLine(w, static_cast<int>(i) + 2, iconStart, inw, icon.at(i), true);
+    }
   }
   ColoredLine label = {"pico dashboard", PAIR_NONE}, path = getPathLine(status);
   int sCol = getIconWidth() + iconStart + margin;
-  if (sCol + std::max(path.label.size(), label.label.size()) <
-      getInnerWidth(w)) {
+  if (sCol + std::max(path.label.size(), label.label.size()) < right) {
     drawLine(w, 3, sCol, inw, label);
     drawLine(w, 4, sCol, inw, getPathLine(status));
   }
