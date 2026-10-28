@@ -2,4 +2,5 @@
 #include "AppState.hpp"
 #include <vector>
 
-std::vector<ColoredLine> getTitle();
+std::vector<ColoredLine> getIcon();
+int getIconWidth();

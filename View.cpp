@@ -120,11 +120,16 @@ void drawStatus(WINDOW *w, const Status &status,
 
 void drawHeader(WINDOW *w, const Status &status,
                 const SharedState &sharedState) {
-
-  std::vector<ColoredLine> title = getTitle();
-  for (size_t i = 0; i < title.size(); i++) {
-    drawLine(w, static_cast<int>(i) + 2, 4, getInnerWidth(w), title.at(i));
+  int iconStart = 2, inw = getInnerWidth(w), margin = inw / 10;
+  std::vector<ColoredLine> icon = getIcon();
+  for (size_t i = 0; i < icon.size(); i++) {
+    drawLine(w, static_cast<int>(i) + iconStart, 4, inw, icon.at(i));
   }
-  drawLine(w, 3, 30, getInnerWidth(w), {"pico dashboard", PAIR_NONE});
-  drawLine(w, 4, 30, getInnerWidth(w), getPathLine(status));
+  ColoredLine label = {"pico dashboard", PAIR_NONE}, path = getPathLine(status);
+  int sCol = getIconWidth() + iconStart + margin;
+  if (sCol + std::max(path.label.size(), label.label.size()) <
+      getInnerWidth(w)) {
+    drawLine(w, 3, sCol, inw, label);
+    drawLine(w, 4, sCol, inw, getPathLine(status));
+  }
 }
