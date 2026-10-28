@@ -5,4 +5,10 @@ enum ColorPairs {
   PAIR_GOOD,
   PAIR_WARN,
   PAIR_ERROR,
+  PAIR_ICON1,
+  PAIR_ICON2,
+  PAIR_ICON3,
+  PAIR_ICON4,
+  PAIR_ICON5,
+  PAIR_ALT
 };

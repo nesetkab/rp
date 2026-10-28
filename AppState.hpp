@@ -1,4 +1,5 @@
 #pragma once
+#include "Colors.hpp"
 #include <atomic>
 #include <chrono>
 #include <filesystem>
@@ -9,6 +10,11 @@
 enum class FilesState { Unknown, Deployed, Changed };
 
 enum class ActionKind { Normal, Interactive, Deploy, Stop };
+
+struct ColoredLine {
+  std::string label;
+  ColorPairs color;
+};
 
 struct Action {
   std::string label;

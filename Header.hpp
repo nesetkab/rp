@@ -1,4 +1,5 @@
 #pragma once
-#include <string>
+#include "AppState.hpp"
 #include <vector>
-std::vector<std::string> getTitle();
+
+std::vector<ColoredLine> getTitle();

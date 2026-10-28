@@ -8,11 +8,6 @@
 #include <string>
 #include <vector>
 
-struct ColoredLine {
-  std::string label;
-  ColorPairs color;
-};
-
 int getInnerWidth(WINDOW *w) { return std::max(0, getmaxx(w) - 4); }
 
 void drawLine(WINDOW *w, int row, int col, int maxl,
@@ -47,7 +42,7 @@ void drawStatusLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines) {
 }
 
 ColoredLine getPathLine(const Status &status) {
-  return {status.path, ColorPairs::PAIR_NONE};
+  return {status.path, ColorPairs::PAIR_ALT};
 }
 
 ColoredLine getResultLine(const SharedState &sharedState) {
@@ -125,11 +120,11 @@ void drawStatus(WINDOW *w, const Status &status,
 
 void drawHeader(WINDOW *w, const Status &status,
                 const SharedState &sharedState) {
-  std::vector<ColoredLine> headers;
-  for (std::string l : getTitle()) {
-    headers.push_back({l, ColorPairs::PAIR_NONE});
+
+  std::vector<ColoredLine> title = getTitle();
+  for (size_t i = 0; i < title.size(); i++) {
+    drawLine(w, static_cast<int>(i) + 2, 4, getInnerWidth(w), title.at(i));
   }
-  for (size_t i = 0; i < headers.size(); i++) {
-    drawLine(w, static_cast<int>(i) + 1, 2, getInnerWidth(w), headers.at(i));
-  }
+  drawLine(w, 3, 30, getInnerWidth(w), {"pico dashboard", PAIR_NONE});
+  drawLine(w, 4, 30, getInnerWidth(w), getPathLine(status));
 }
