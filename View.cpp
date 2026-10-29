@@ -129,7 +129,7 @@ void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
   ColorPairs col = getSparkleColor(status, sharedState);
 
   for (int i = 0; i < maxSparkles; i++) {
-    Sparkle s = sparkles.at(i);
+    const Sparkle &s = sparkles.at(i);
     ColoredLine l = {getSparkleString(s.phase, getStep(startTime)), col};
     drawLine(w, getRow(s.y, w), getCol(s.x, w), l);
   }
@@ -141,9 +141,10 @@ void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
     }
   }
   ColoredLine label = {"pico dashboard", PAIR_NONE}, path = getPathLine(status);
-  int sCol = getIconWidth() + iconStart + margin;
-  if (sCol + std::max(path.label.size(), label.label.size()) < right) {
+  int sCol = getIconWidth() + iconStart + margin,
+      cols = sCol + static_cast<int>(path.label.size(), label.label.size());
+  if (cols < right) {
     drawLine(w, 3, sCol, label, inw);
-    drawLine(w, 4, sCol, getPathLine(status), inw);
+    drawLine(w, 4, sCol, path, inw);
   }
 }
