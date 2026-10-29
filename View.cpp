@@ -126,10 +126,11 @@ void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
   int inw = getInnerWidth(w), maxSparkles = getMaxSparkles(w, sparkles.size());
   int iconStart = 4, margin = inw / 10, right = 2 + inw;
 
+  ColorPairs col = getSparkleColor(status, sharedState);
+
   for (int i = 0; i < maxSparkles; i++) {
     Sparkle s = sparkles.at(i);
-    ColoredLine l = {getSparkleString(s.phase, getStep(startTime)),
-                     ColorPairs::PAIR_GOOD};
+    ColoredLine l = {getSparkleString(s.phase, getStep(startTime)), col};
     drawLine(w, getRow(s.y, w), getCol(s.x, w), l);
   }
 

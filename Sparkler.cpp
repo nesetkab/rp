@@ -1,4 +1,5 @@
 #include "AppState.hpp"
+#include "Colors.hpp"
 #include <functional>
 #include <ncurses.h>
 #include <random>
@@ -28,7 +29,7 @@ std::string getSparkleString(int phase, int step) {
 }
 
 int getStep(std::chrono::steady_clock::time_point startTime) {
-  const int stepThreshold = 300;
+  const int stepThreshold = 400;
   auto elapsed = std::chrono::steady_clock::now() - startTime;
   long long ms =
       std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
@@ -45,4 +46,14 @@ int getRow(float y, WINDOW *w) { return (1 + y * (getmaxy(w) - 2)); }
 
 int getCol(float x, WINDOW *w) {
   return (2 + x * (std::max(0, getmaxx(w) - 4)));
+}
+
+ColorPairs getSparkleColor(const Status &status,
+                           const SharedState &sharedState) {
+  if (sharedState.busy == true) {
+    return ColorPairs::PAIR_WARN;
+  } else if (status.deviceFound) {
+    return ColorPairs::PAIR_GOOD;
+  }
+  return ColorPairs::PAIR_ERROR;
 }
