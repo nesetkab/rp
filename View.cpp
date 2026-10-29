@@ -12,14 +12,10 @@
 
 int getInnerWidth(WINDOW *w) { return std::max(0, getmaxx(w) - 4); }
 
-void drawLine(WINDOW *w, int row, int col, int maxl,
-              const ColoredLine &coloredLine, bool noLimit = false) {
+void drawLine(WINDOW *w, int row, int col, const ColoredLine &coloredLine,
+              int maxl = -1) {
   wattron(w, COLOR_PAIR(coloredLine.color));
-  if (noLimit) {
-    mvwprintw(w, row, col, "%s", coloredLine.label.c_str());
-  } else {
-    mvwprintw(w, row, col, "%.*s", maxl, coloredLine.label.c_str());
-  }
+  mvwprintw(w, row, col, "%.*s", maxl, coloredLine.label.c_str());
   wattroff(w, COLOR_PAIR(coloredLine.color));
 }
 
@@ -38,7 +34,7 @@ void drawStatusLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines) {
   for (const ColoredLine &coloredLine : coloredLines) {
     if (right - col <= 0)
       break;
-    drawLine(w, 1, col, right - col, coloredLine);
+    drawLine(w, 1, col, coloredLine, right - col);
     col += coloredLine.label.size() + gap;
     if (xtracol > 0) {
       col++;
@@ -127,34 +123,26 @@ void drawStatus(WINDOW *w, const Status &status,
 void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
                 const std::vector<Sparkle> &sparkles,
                 std::chrono::steady_clock::time_point startTime) {
-  int inw = getInnerWidth(w),
-      maxSparkles = std::min(((getmaxx(w) * getmaxy(w)) / 40),
-                             static_cast<int>(sparkles.size()));
+  int inw = getInnerWidth(w), maxSparkles = getMaxSparkles(w, sparkles.size());
   int iconStart = 4, margin = inw / 10, right = 2 + inw;
-
-  auto elapsed = std::chrono::steady_clock::now() - startTime;
-  long long ms =
-      std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-  int step = static_cast<int>(ms / 300);
 
   for (int i = 0; i < maxSparkles; i++) {
     Sparkle s = sparkles.at(i);
-    drawLine(w, (1 + s.y * (getmaxy(w) - 2)), (2 + s.x * (right - 2)), 0,
-             {getSparkleString(s.phase, static_cast<int>(ms / 800)),
-              ColorPairs::PAIR_GOOD},
-             true);
+    ColoredLine l = {getSparkleString(s.phase, getStep(startTime)),
+                     ColorPairs::PAIR_GOOD};
+    drawLine(w, getRow(s.y, w), getCol(s.x, w), l);
   }
 
   std::vector<ColoredLine> icon = getIcon();
   if (iconStart + getIconWidth() < right) {
     for (size_t i = 0; i < icon.size(); i++) {
-      drawLine(w, static_cast<int>(i) + 2, iconStart, inw, icon.at(i), true);
+      drawLine(w, static_cast<int>(i) + 2, iconStart, icon.at(i));
     }
   }
   ColoredLine label = {"pico dashboard", PAIR_NONE}, path = getPathLine(status);
   int sCol = getIconWidth() + iconStart + margin;
   if (sCol + std::max(path.label.size(), label.label.size()) < right) {
-    drawLine(w, 3, sCol, inw, label);
-    drawLine(w, 4, sCol, inw, getPathLine(status));
+    drawLine(w, 3, sCol, label, inw);
+    drawLine(w, 4, sCol, getPathLine(status), inw);
   }
 }
