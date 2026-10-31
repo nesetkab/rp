@@ -9,7 +9,7 @@ public:
   ~Panel();
   Panel(const Panel &) = delete;
   Panel &operator=(const Panel &) = delete;
-  void drawFrame();
+  void drawFrame(const bool &showBox);
   WINDOW *get() const;
   void resize(const Rect &r);
 

@@ -26,18 +26,20 @@ void setupInput(WINDOW *w) {
 void drawEverything(const std::array<Panel *, 4> &windows, Status &status,
                     SharedState &sharedState, const Config &config,
                     const int &selAction, const std::vector<Sparkle> &sparkles,
-                    std::chrono::steady_clock::time_point startTime) {
+                    std::chrono::steady_clock::time_point startTime,
+                    const bool &header) {
   checkStatus(status, sharedState, config.devicePrefix);
   drawActions(windows.at(1)->get(), config.actions, selAction);
   {
     std::lock_guard<std::mutex> lock(sharedState.mutex);
     drawLogs(windows.at(2)->get(), sharedState.lines);
     drawStatus(windows.at(3)->get(), status, sharedState);
-    drawHeader(windows.at(0)->get(), status, sharedState, sparkles, startTime);
+    drawHeader(windows.at(0)->get(), status, sharedState, sparkles, startTime,
+               header);
   }
 }
 
-void resize(const Config &config, const std::array<Panel *, 4> w) {
+Layout resize(const Config &config, const std::array<Panel *, 4> w) {
   int rows = 0, cols = 0;
   getmaxyx(stdscr, rows, cols);
   Layout layout = getLayout(rows, cols, config.actions);
@@ -46,6 +48,7 @@ void resize(const Config &config, const std::array<Panel *, 4> w) {
   w.at(2)->resize(layout.log);
   w.at(3)->resize(layout.status);
   clearok(curscr, TRUE);
+  return layout;
 }
 
 int main(int argc, char *argv[]) {
@@ -81,12 +84,16 @@ int main(int argc, char *argv[]) {
     bool dash = true;
 
     while (dash) {
-      for (Panel *p : windows) {
-        p->drawFrame();
+      for (int i = 0; i < windows.size(); i++) {
+        bool showBox = true;
+        if (i == 0) {
+          showBox = layout.showHeader;
+        }
+        windows.at(i)->drawFrame(showBox);
       }
 
       drawEverything(windows, status, sharedState, config, selAction, sparkles,
-                     startTime);
+                     startTime, layout.showHeader);
 
       for (Panel *p : windows) {
         wnoutrefresh(p->get());
@@ -109,7 +116,7 @@ int main(int argc, char *argv[]) {
             if (selAction >= static_cast<int>(config.actions.size())) {
               selAction = 0;
             }
-            resize(config, windows);
+            layout = resize(config, windows);
             addLine(sharedState, "config reloaded");
           } catch (const std::exception &e) {
             addLine(sharedState,
@@ -139,7 +146,7 @@ int main(int argc, char *argv[]) {
           break;
 
         case KEY_RESIZE:
-          resize(config, windows);
+          layout = resize(config, windows);
           break;
 
         default:

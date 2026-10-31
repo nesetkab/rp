@@ -120,31 +120,48 @@ void drawStatus(WINDOW *w, const Status &status,
   drawStatusLines(w, statuses);
 }
 
+int getCols(const int &start, const ColoredLine &path,
+            const ColoredLine &label) {
+  return start +
+         static_cast<int>(std::max(path.label.size(), label.label.size()));
+}
+
 void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
                 const std::vector<Sparkle> &sparkles,
-                std::chrono::steady_clock::time_point startTime) {
+                std::chrono::steady_clock::time_point startTime,
+                const bool &drawHeader) {
   int inw = getInnerWidth(w), maxSparkles = getMaxSparkles(w, sparkles.size());
   int iconStart = 4, margin = inw / 10, right = 2 + inw;
+  if (drawHeader) {
+    ColorPairs col = getSparkleColor(status, sharedState);
 
-  ColorPairs col = getSparkleColor(status, sharedState);
-
-  for (int i = 0; i < maxSparkles; i++) {
-    const Sparkle &s = sparkles.at(i);
-    ColoredLine l = {getSparkleString(s.phase, getStep(startTime)), col};
-    drawLine(w, getRow(s.y, w), getCol(s.x, w), l);
-  }
-
-  std::vector<ColoredLine> icon = getIcon();
-  if (iconStart + getIconWidth() < right) {
-    for (size_t i = 0; i < icon.size(); i++) {
-      drawLine(w, static_cast<int>(i) + 2, iconStart, icon.at(i));
+    for (int i = 0; i < maxSparkles; i++) {
+      const Sparkle &s = sparkles.at(i);
+      ColoredLine l = {getSparkleString(s.phase, getStep(startTime)), col};
+      drawLine(w, getRow(s.y, w), getCol(s.x, w), l);
     }
-  }
-  ColoredLine label = {"pico dashboard", PAIR_NONE}, path = getPathLine(status);
-  int sCol = getIconWidth() + iconStart + margin,
-      cols = sCol + static_cast<int>(path.label.size(), label.label.size());
-  if (cols < right) {
-    drawLine(w, 3, sCol, label, inw);
-    drawLine(w, 4, sCol, path, inw);
+
+    std::vector<ColoredLine> icon = getIcon();
+    if (iconStart + getIconWidth() < right) {
+      for (size_t i = 0; i < icon.size(); i++) {
+        drawLine(w, static_cast<int>(i) + 2, iconStart, icon.at(i));
+      }
+    }
+    ColoredLine label = {"pico dashboard", PAIR_NONE},
+                path = getPathLine(status);
+    int sCol = getIconWidth() + iconStart + margin,
+        cols = getCols(sCol, path, label);
+    if (cols < right) {
+      drawLine(w, 3, sCol, label, inw);
+      drawLine(w, 4, sCol, path, inw);
+    }
+  } else {
+    ColoredLine label = {"pico dashboard", PAIR_NONE},
+                path = getPathLine(status);
+    int sCol = 0, cols = sCol + label.label.size() + 2;
+    drawLine(w, 0, sCol, label, inw);
+    if (cols + path.label.size() < right) {
+      drawLine(w, 0, cols, path, inw);
+    }
   }
 }

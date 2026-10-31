@@ -11,4 +11,5 @@ void drawStatus(WINDOW *w, const Status &status,
                 const SharedState &sharedState);
 void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
                 const std::vector<Sparkle> &sparkles,
-                std::chrono::steady_clock::time_point startTime);
+                std::chrono::steady_clock::time_point startTime,
+                const bool &drawHeader);

@@ -6,10 +6,12 @@ Panel::Panel(int h, int w, int srow, int scol, const std::string &t)
 
 Panel::~Panel() { delwin(win); }
 
-void Panel::drawFrame() {
+void Panel::drawFrame(const bool &showBox) {
   werase(win);
-  box(win, 0, 0);
-  mvwprintw(win, 0, 2, " %s ", title.c_str());
+  if (showBox) {
+    box(win, 0, 0);
+    mvwprintw(win, 0, 2, " %s ", title.c_str());
+  }
 }
 
 WINDOW *Panel::get() const { return win; }
