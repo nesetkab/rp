@@ -26,7 +26,7 @@ void drawStatusLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines,
   int width = getInnerWidth(w);
   int right = start + width;
   for (const ColoredLine &coloredLine : coloredLines) {
-    free += coloredLine.label.size();
+    free += countChars(coloredLine.label);
   }
   free = width - free;
   int gaps = std::max(1, intpls(coloredLines.size() - 1));
@@ -37,7 +37,7 @@ void drawStatusLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines,
     if (right - col <= 0)
       break;
     drawLine(w, row, col, coloredLine, right - col);
-    col += coloredLine.label.size() + gap;
+    col += countChars(coloredLine.label) + gap;
     if (xtracol > 0) {
       col++;
       xtracol--;
@@ -137,6 +137,8 @@ void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
                 bool showHeader) {
   int inw = getInnerWidth(w), maxSparkles = getMaxSparkles(w, sparkles.size());
   int iconStart = 4, margin = inw / 10, right = 2 + inw;
+  int iconW = countChars(getIcon().at(0).label);
+  ColoredLine label = {"pico dashboard", PAIR_NONE}, path = getPathLine(status);
   if (showHeader) {
     ColorPairs col = getSparkleColor(status, sharedState);
 
@@ -147,22 +149,19 @@ void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
     }
 
     std::vector<ColoredLine> icon = getIcon();
-    if (iconStart + getIconWidth() < right) {
+    if (iconStart + iconW < right) {
       for (size_t i = 0; i < icon.size(); i++) {
         drawLine(w, intpls(i) + 2, iconStart, icon.at(i));
       }
     }
-    ColoredLine label = {"pico dashboard", PAIR_NONE},
-                path = getPathLine(status);
-    int sCol = getIconWidth() + iconStart + margin,
-        cols = getCols(sCol, path, label);
+
+    int sCol = iconW + iconStart + margin;
+    int cols = getCols(sCol, path, label);
     if (cols < right) {
       drawLine(w, 3, sCol, label, inw);
       drawLine(w, 4, sCol, path, inw);
     }
   } else {
-    ColoredLine label = {"pico dashboard", PAIR_NONE},
-                path = getPathLine(status);
     int sCol = 0, cols = sCol + label.label.size() + 2;
     drawLine(w, 0, sCol, label, inw);
     if (cols + intpls(path.label.size()) < right) {
