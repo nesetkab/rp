@@ -1,5 +1,6 @@
 #include "AppState.hpp"
 #include "Config.hpp"
+#include "Help.hpp"
 #include "Layout.hpp"
 #include "Panel.hpp"
 #include "Runner.hpp"
@@ -27,7 +28,7 @@ void drawEverything(const std::array<Panel *, 4> &windows, Status &status,
                     SharedState &sharedState, const Config &config,
                     const int &selAction, const std::vector<Sparkle> &sparkles,
                     std::chrono::steady_clock::time_point startTime,
-                    const bool &header) {
+                    bool showHeader) {
   checkStatus(status, sharedState, config.devicePrefix);
   drawActions(windows.at(1)->get(), config.actions, selAction);
   {
@@ -35,7 +36,7 @@ void drawEverything(const std::array<Panel *, 4> &windows, Status &status,
     drawLogs(windows.at(2)->get(), sharedState.lines);
     drawStatus(windows.at(3)->get(), status, sharedState);
     drawHeader(windows.at(0)->get(), status, sharedState, sparkles, startTime,
-               header);
+               showHeader);
   }
 }
 
@@ -54,7 +55,6 @@ Layout resize(const Config &config, const std::array<Panel *, 4> w) {
 int main(int argc, char *argv[]) {
   try {
     std::string configPath = argc > 1 ? argv[1] : "config.json";
-
     Config config = loadConfig(configPath);
     int selAction = 0;
     Status status = {std::filesystem::current_path(), false,
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
     bool dash = true;
 
     while (dash) {
-      for (int i = 0; i < windows.size(); i++) {
+      for (int i = 0; i < intpls(windows.size()); i++) {
         bool showBox = true;
         if (i == 0) {
           showBox = layout.showHeader;
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
         case 'R':
           try {
             config = loadConfig(configPath);
-            if (selAction >= static_cast<int>(config.actions.size())) {
+            if (selAction >= intpls(config.actions.size())) {
               selAction = 0;
             }
             layout = resize(config, windows);
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
           break;
 
         case KEY_DOWN:
-          if (selAction + 1 < static_cast<int>(config.actions.size())) {
+          if (selAction + 1 < intpls(config.actions.size())) {
             selAction++;
           }
           break;
@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
         default:
           for (size_t i = 0; i < config.actions.size(); i++) {
             if (config.actions.at(i).key == key) {
-              selAction = static_cast<int>(i);
+              selAction = intpls(i);
               selectAnAction(sharedState, config.actions, selAction, worker);
               break;
             }

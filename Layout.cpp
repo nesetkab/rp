@@ -1,13 +1,14 @@
 #include "Layout.hpp"
 #include "AppState.hpp"
+#include "Help.hpp"
 #include <algorithm>
 
 Layout getLayout(int rows, int cols, const std::vector<Action> &action) {
   int maxAcL = 0;
   if (!action.empty()) {
     for (const Action &a : action) {
-      if (static_cast<int>(a.label.length()) > maxAcL)
-        maxAcL = static_cast<int>(a.label.length());
+      if (intpls(a.label.length()) > maxAcL)
+        maxAcL = intpls(a.label.length());
     }
     maxAcL += 8; // margin for border n shiiii
   }

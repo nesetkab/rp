@@ -1,5 +1,6 @@
 #include "AppState.hpp"
 #include "Colors.hpp"
+#include "Help.hpp"
 #include <functional>
 #include <ncurses.h>
 #include <random>
@@ -33,13 +34,12 @@ int getStep(std::chrono::steady_clock::time_point startTime) {
   auto elapsed = std::chrono::steady_clock::now() - startTime;
   long long ms =
       std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
-  return static_cast<int>(ms / stepThreshold);
+  return intpls(ms / stepThreshold);
 }
 
 int getMaxSparkles(WINDOW *w, std::size_t size) {
   int density = 40; // tiles per sparkle
-  return std::min(((getmaxx(w) * getmaxy(w)) / density),
-                  static_cast<int>(size));
+  return std::min(((getmaxx(w) * getmaxy(w)) / density), intpls(size));
 }
 
 int getRow(float y, WINDOW *w) { return (1 + y * (getmaxy(w) - 2)); }

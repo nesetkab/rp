@@ -11,6 +11,13 @@ void Panel::drawFrame(const bool &showBox) {
   if (showBox) {
     box(win, 0, 0);
     mvwprintw(win, 0, 2, " %s ", title.c_str());
+
+    int y = 0, x = 0;
+    getmaxyx(win, y, x);
+    mvwprintw(win, 0, 0, "╭");
+    mvwprintw(win, y, 0, "╰");
+    mvwprintw(win, 0, x, "╮");
+    mvwprintw(win, y, x, "╯");
   }
 }
 

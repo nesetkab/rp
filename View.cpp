@@ -2,6 +2,7 @@
 #include "AppState.hpp"
 #include "Colors.hpp"
 #include "Header.hpp"
+#include "Help.hpp"
 #include "Sparkler.hpp"
 #include <algorithm>
 #include <chrono>
@@ -19,7 +20,8 @@ void drawLine(WINDOW *w, int row, int col, const ColoredLine &coloredLine,
   wattroff(w, COLOR_PAIR(coloredLine.color));
 }
 
-void drawStatusLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines) {
+void drawStatusLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines,
+                     int row) {
   int start = 2, free = 0;
   int width = getInnerWidth(w);
   int right = start + width;
@@ -27,14 +29,14 @@ void drawStatusLines(WINDOW *w, const std::vector<ColoredLine> &coloredLines) {
     free += coloredLine.label.size();
   }
   free = width - free;
-  int gaps = std::max(1, static_cast<int>(coloredLines.size() - 1));
+  int gaps = std::max(1, intpls(coloredLines.size() - 1));
   int gap = std::max(1, free / gaps);
   int col = start;
   int xtracol = free < gaps ? 0 : free % gaps;
   for (const ColoredLine &coloredLine : coloredLines) {
     if (right - col <= 0)
       break;
-    drawLine(w, 1, col, coloredLine, right - col);
+    drawLine(w, row, col, coloredLine, right - col);
     col += coloredLine.label.size() + gap;
     if (xtracol > 0) {
       col++;
@@ -91,7 +93,7 @@ ColoredLine getFilesLine(const Status &status) {
 void drawActions(WINDOW *w, const std::vector<Action> &actions, int sel) {
   int maxy = getmaxy(w);
   for (size_t i = 0; i < actions.size(); i++) {
-    int in = static_cast<int>(i);
+    int in = intpls(i);
     if (in >= maxy - 2)
       break;
     if (in == sel)
@@ -104,7 +106,7 @@ void drawActions(WINDOW *w, const std::vector<Action> &actions, int sel) {
 
 void drawLogs(WINDOW *w, const std::vector<std::string> &logLines) {
   int visible = getmaxy(w) - 2;
-  int lines = static_cast<int>(logLines.size());
+  int lines = intpls(logLines.size());
   int start = std::max(0, lines - visible);
   int maxl = getInnerWidth(w);
   for (int i = start; i < lines; i++) {
@@ -117,22 +119,25 @@ void drawStatus(WINDOW *w, const Status &status,
   std::vector<ColoredLine> statuses = {
       getResultLine(sharedState), getBusyLine(sharedState),
       getDeviceLine(status), getFilesLine(status)};
-  drawStatusLines(w, statuses);
+  std::vector<ColoredLine> hints = {{" q quit ", ColorPairs::PAIR_ALT},
+                                    {" R reload ", ColorPairs::PAIR_ALT},
+                                    {" ↑↓ select ", ColorPairs::PAIR_ALT}};
+  drawStatusLines(w, statuses, 1);
+  drawStatusLines(w, hints, 2);
 }
 
 int getCols(const int &start, const ColoredLine &path,
             const ColoredLine &label) {
-  return start +
-         static_cast<int>(std::max(path.label.size(), label.label.size()));
+  return start + intpls(std::max(path.label.size(), label.label.size()));
 }
 
 void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
                 const std::vector<Sparkle> &sparkles,
                 std::chrono::steady_clock::time_point startTime,
-                const bool &drawHeader) {
+                bool showHeader) {
   int inw = getInnerWidth(w), maxSparkles = getMaxSparkles(w, sparkles.size());
   int iconStart = 4, margin = inw / 10, right = 2 + inw;
-  if (drawHeader) {
+  if (showHeader) {
     ColorPairs col = getSparkleColor(status, sharedState);
 
     for (int i = 0; i < maxSparkles; i++) {
@@ -144,7 +149,7 @@ void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
     std::vector<ColoredLine> icon = getIcon();
     if (iconStart + getIconWidth() < right) {
       for (size_t i = 0; i < icon.size(); i++) {
-        drawLine(w, static_cast<int>(i) + 2, iconStart, icon.at(i));
+        drawLine(w, intpls(i) + 2, iconStart, icon.at(i));
       }
     }
     ColoredLine label = {"pico dashboard", PAIR_NONE},
@@ -160,7 +165,7 @@ void drawHeader(WINDOW *w, const Status &status, const SharedState &sharedState,
                 path = getPathLine(status);
     int sCol = 0, cols = sCol + label.label.size() + 2;
     drawLine(w, 0, sCol, label, inw);
-    if (cols + path.label.size() < right) {
+    if (cols + intpls(path.label.size()) < right) {
       drawLine(w, 0, cols, path, inw);
     }
   }
