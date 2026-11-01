@@ -1,5 +1,6 @@
 #include "AppState.hpp"
 #include "Config.hpp"
+#include "Demo.hpp"
 #include "Help.hpp"
 #include "Layout.hpp"
 #include "Panel.hpp"
@@ -12,6 +13,7 @@
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <ncurses.h>
 #include <nlohmann/json.hpp>
@@ -52,9 +54,38 @@ Layout resize(const Config &config, const std::array<Panel *, 4> w) {
   return layout;
 }
 
+#ifndef RP_VERSION
+#define RP_VERSION "dev"
+#endif
+
+void printUsage() {
+  std::cout << "rp " RP_VERSION ", pico dashboard in ur terminal\n\n"
+               "  rp                 uses ./config.json\n"
+               "  rp <config.json>   uses some other config\n"
+               "  rp --demo          try it w a fake pico, no hardware needed\n"
+               "  rp --version       version\n"
+               "  rp --help          this\n";
+}
+
 int main(int argc, char *argv[]) {
+  std::string arg = argc > 1 ? argv[1] : "";
+  if (arg == "--help" || arg == "-h") {
+    printUsage();
+    return 0;
+  }
+  if (arg == "--version" || arg == "-v") {
+    std::cout << "rp " RP_VERSION "\n";
+    return 0;
+  }
   try {
-    std::string configPath = argc > 1 ? argv[1] : "config.json";
+    std::unique_ptr<DemoProject> demo;
+    std::string configPath = "config.json";
+    if (arg == "--demo") {
+      demo = std::make_unique<DemoProject>();
+      configPath = demo->configPath();
+    } else if (!arg.empty()) {
+      configPath = arg;
+    }
     Config config = loadConfig(configPath);
     int selAction = 0;
     Status status = {std::filesystem::current_path(), false,
@@ -62,6 +93,11 @@ int main(int argc, char *argv[]) {
     SharedState sharedState;
     std::thread worker;
     Terminal terminal;
+    if (demo) {
+      for (const std::string &line : demo->welcomeLines()) {
+        addLine(sharedState, line);
+      }
+    }
 
     std::vector<Sparkle> sparkles = getSparkles(getPathLine(status).label);
     auto startTime = std::chrono::steady_clock::now();
