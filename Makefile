@@ -1,7 +1,19 @@
 BREW_PREFIX := $(shell brew --prefix 2>/dev/null)
 CXXFLAGS ?= -std=c++17 -Wall -Wextra -O2
 CPPFLAGS += $(if $(BREW_PREFIX),-I$(BREW_PREFIX)/include)
-LDLIBS += -lncurses
+UNAME_S := $(shell uname -s)
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+CPPFLAGS += -DRP_VERSION='"$(VERSION)"'
+ifeq ($(UNAME_S),Linux)
+  ifeq ($(STATIC),1)
+    LDFLAGS += -static
+    LDLIBS += -lncursesw -ltinfo
+  else
+    LDLIBS += $(shell pkg-config --libs ncursesw 2>/dev/null || echo -lncursesw)
+  endif
+else
+  LDLIBS += -lncurses
+endif
 PREFIX ?= /usr/local
 BUILD ?= build/release
 TARGET ?= rp
