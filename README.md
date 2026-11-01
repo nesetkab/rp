@@ -8,6 +8,19 @@ Instead of remembering `mpremote` commands, you press one key. `rp` runs the com
 
 ![rp demo](docs/demo.gif)
 
+## try it (no pico needed)
+
+mac or linux:
+
+```sh
+curl -fsSL https://github.com/nesetkab/rp/releases/latest/download/install.sh | sh
+~/.local/bin/rp --demo
+```
+
+`--demo` spins up a throwaway project in `/tmp` with a fake pico and a fake `mpremote` so everything works w no hardware. `r` run, `s` stop, `d` deploy, `e` edit `main.py`, `u` unplug/replug, `p` repl, `q` quit. the demo folder gets deleted when u quit
+
+or just grab a binary from [releases](https://github.com/nesetkab/rp/releases/latest). on windows use wsl + the linux one
+
 ## Features
 
 - **One-key actions.** Run, deploy, open the REPL, list files, reset the board. Every action is a shell command you define in `config.json`.
@@ -22,7 +35,7 @@ Instead of remembering `mpremote` commands, you press one key. `rp` runs the com
 
 ## Requirements
 
-- macOS (tested) or Linux (should work, not tested)
+- macOS or Linux
 - A C++17 compiler (`clang++` or `g++`)
 - ncurses
 - [nlohmann/json](https://github.com/nlohmann/json)
@@ -48,6 +61,7 @@ make
 | Command | What it does |
 | --- | --- |
 | `make` | Builds `./rp` with optimizations |
+| `make STATIC=1` | linux only, static build so it runs on other linux boxes |
 | `make debug` | Builds `./rp-debug` with AddressSanitizer and UndefinedBehaviorSanitizer |
 | `make install` | Copies `rp` to `/usr/local/bin` (change it with `PREFIX=~/.local`) |
 | `make uninstall` | Removes the installed binary |
@@ -61,6 +75,7 @@ Run `rp` from the folder of your Pico project, the one with your `Makefile` and 
 cd ~/my-pico-project
 rp                       # uses ./config.json
 rp ~/configs/pico.json   # or point it at any config file
+rp --demo                # fake pico, no hardware
 ```
 
 Commands run in the folder you started `rp` from, and the deploy tracker watches the `.py` files in that folder.
@@ -105,6 +120,7 @@ From left to right:
 | Field | Meaning |
 | --- | --- |
 | `devicePrefix` | Start of the device name in `/dev`. On macOS a Pico shows up as `cu.usbmodem...`; on Linux it is usually `ttyACM`. Run `mpremote devs` to check yours. |
+| `deviceDir` | optional, where to look for the device. defaults to `/dev` |
 | `label` | Name shown in the sidebar and the status bar. |
 | `key` | Single character that runs the action. `q` and `R` are reserved. |
 | `command` | Shell command to run. Not needed for `stop`. |
@@ -142,6 +158,7 @@ cd example
 | `Runner.cpp` | Starts commands with `posix_spawn` in their own process group, reads their output on a worker thread, and stops them with `SIGTERM`. |
 | `StatusCheck.cpp` | Once a second, looks for the device in `/dev` and checks `.py` files against the last deploy time. |
 | `Config.cpp` | Loads and validates `config.json`. |
+| `Demo.cpp` | makes the `--demo` project, fake `mpremote` + fake `/dev` + example `main.py` |
 | `AppState.hpp` | The shared state between the UI thread and the worker thread, guarded by a mutex. |
 
 ## Troubleshooting
