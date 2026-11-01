@@ -14,6 +14,8 @@ void Panel::drawFrame(const bool &showBox) {
 
     int y = 0, x = 0;
     getmaxyx(win, y, x);
+    y--;
+    x--;
     mvwprintw(win, 0, 0, "╭");
     mvwprintw(win, y, 0, "╰");
     mvwprintw(win, 0, x, "╮");
