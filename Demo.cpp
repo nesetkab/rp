@@ -5,6 +5,7 @@
 #include <string>
 #include <sys/stat.h>
 #include <system_error>
+#include <unistd.h>
 
 namespace fs = std::filesystem;
 
