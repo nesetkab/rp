@@ -1,0 +1,106 @@
+name: build and release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            asset: rp-linux-x86_64
+          - runner: ubuntu-24.04-arm
+            asset: rp-linux-arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential libncurses-dev nlohmann-json3-dev
+      - name: build (static)
+        run: make STATIC=1 && strip rp
+      - name: smoke test
+        run: ./rp --version && ./rp --help
+      - name: package
+        run: tar -czf ${{ matrix.asset }}.tar.gz rp README.md config.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}.tar.gz
+
+  macos:
+    runs-on: macos-latest
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: install dependencies
+        run: brew install nlohmann-json
+      - name: build arm64
+        run: make BUILD=build/arm64 TARGET=rp-arm64 CXXFLAGS="-std=c++17 -Wall -Wextra -O2 -arch arm64" LDFLAGS="-arch arm64"
+      - name: build x86_64
+        run: make BUILD=build/x86_64 TARGET=rp-x86_64 CXXFLAGS="-std=c++17 -Wall -Wextra -O2 -arch x86_64" LDFLAGS="-arch x86_64"
+      - name: make universal binary
+        run: lipo -create -output rp rp-arm64 rp-x86_64 && strip rp && lipo -info rp
+      - name: smoke test
+        run: ./rp --version && ./rp --help
+      - name: package
+        run: tar -czf rp-macos-universal.tar.gz rp README.md config.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rp-macos-universal
+          path: rp-macos-universal.tar.gz
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, macos]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            install.sh
+          body: |
+            ## Try it in one line (macOS or Linux, no Pico needed)
+
+            ```sh
+            curl -fsSL https://github.com/nesetkab/rp/releases/latest/download/install.sh | sh
+            ~/.local/bin/rp --demo
+            ```
+
+            `--demo` starts `rp` with a pretend Pico, so you can try every feature without hardware.
+            Press `r` to run, `s` to stop, `d` to deploy, `e` to edit a file, `u` to unplug the board, `p` for the REPL, and `q` to quit.
+
+            ## Manual download
+
+            | System | File |
+            | --- | --- |
+            | macOS (Apple Silicon and Intel) | `rp-macos-universal.tar.gz` |
+            | Linux x86_64 | `rp-linux-x86_64.tar.gz` |
+            | Linux arm64 (Raspberry Pi 4/5) | `rp-linux-arm64.tar.gz` |
+            | Windows | use WSL and the Linux file |
+
+            ```sh
+            tar -xzf rp-*.tar.gz
+            ./rp --demo
+            ```
+
+            On macOS, if you download the file with a browser and it says the app "cannot be opened", run `xattr -d com.apple.quarantine rp` or use the `curl` command above.

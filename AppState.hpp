@@ -32,6 +32,7 @@ struct Action {
 struct Config {
   std::vector<Action> actions;
   std::string devicePrefix;
+  std::string deviceDir = "/dev";
 };
 
 struct Status {

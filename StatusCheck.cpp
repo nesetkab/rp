@@ -1,10 +1,10 @@
 #include "StatusCheck.hpp"
 #include <string>
 
-void checkDeviceFound(Status &status, const std::string &devicePrefix) {
+void checkDeviceFound(Status &status, const std::string &devicePrefix,
+                      const std::string &deviceDir) {
   namespace fs = std::filesystem;
-  // only works on macos :c
-  fs::path dev = "/dev";
+  fs::path dev = deviceDir;
   status.deviceFound = false;
   std::error_code ec;
   fs::directory_iterator it(dev, ec);
@@ -43,12 +43,12 @@ void checkFilesChanged(Status &status,
 }
 
 void checkStatus(Status &status, SharedState &sharedState,
-                 const std::string &devicePrefix) {
+                 const Config &config) {
   auto now = std::chrono::steady_clock::now();
   auto elapsed = now - status.lastCheck;
   if (elapsed >= std::chrono::seconds(1)) {
     status.lastCheck = now;
-    checkDeviceFound(status, devicePrefix);
+    checkDeviceFound(status, config.devicePrefix, config.deviceDir);
     std::filesystem::file_time_type deployTime;
     {
       std::lock_guard<std::mutex> lock(sharedState.mutex);

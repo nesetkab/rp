@@ -1,5 +1,6 @@
 #include "AppState.hpp"
 #include "Config.hpp"
+#include "Demo.hpp"
 #include "Help.hpp"
 #include "Layout.hpp"
 #include "Panel.hpp"
@@ -12,6 +13,7 @@
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <ncurses.h>
 #include <nlohmann/json.hpp>
@@ -29,7 +31,7 @@ void drawEverything(const std::array<Panel *, 4> &windows, Status &status,
                     const int &selAction, const std::vector<Sparkle> &sparkles,
                     std::chrono::steady_clock::time_point startTime,
                     bool showHeader) {
-  checkStatus(status, sharedState, config.devicePrefix);
+  checkStatus(status, sharedState, config);
   drawActions(windows.at(1)->get(), config.actions, selAction);
   {
     std::lock_guard<std::mutex> lock(sharedState.mutex);
@@ -52,9 +54,40 @@ Layout resize(const Config &config, const std::array<Panel *, 4> w) {
   return layout;
 }
 
+#ifndef RP_VERSION
+#define RP_VERSION "dev"
+#endif
+
+void printUsage() {
+  std::cout << "rp " RP_VERSION " - a terminal dashboard for MicroPython on the "
+               "Raspberry Pi Pico\n\n"
+               "usage:\n"
+               "  rp                 use ./config.json\n"
+               "  rp <config.json>   use another config file\n"
+               "  rp --demo          try rp with a pretend pico (no hardware)\n"
+               "  rp --version       print the version\n"
+               "  rp --help          print this help\n";
+}
+
 int main(int argc, char *argv[]) {
+  std::string arg = argc > 1 ? argv[1] : "";
+  if (arg == "--help" || arg == "-h") {
+    printUsage();
+    return 0;
+  }
+  if (arg == "--version" || arg == "-v") {
+    std::cout << "rp " RP_VERSION "\n";
+    return 0;
+  }
   try {
-    std::string configPath = argc > 1 ? argv[1] : "config.json";
+    std::unique_ptr<DemoProject> demo;
+    std::string configPath = "config.json";
+    if (arg == "--demo") {
+      demo = std::make_unique<DemoProject>();
+      configPath = demo->configPath();
+    } else if (!arg.empty()) {
+      configPath = arg;
+    }
     Config config = loadConfig(configPath);
     int selAction = 0;
     Status status = {std::filesystem::current_path(), false,
@@ -62,6 +95,11 @@ int main(int argc, char *argv[]) {
     SharedState sharedState;
     std::thread worker;
     Terminal terminal;
+    if (demo) {
+      for (const std::string &line : demo->welcomeLines()) {
+        addLine(sharedState, line);
+      }
+    }
 
     std::vector<Sparkle> sparkles = getSparkles(getPathLine(status).label);
     auto startTime = std::chrono::steady_clock::now();
