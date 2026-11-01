@@ -6,9 +6,17 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: release tag
+        required: true
+        default: v1.0.0
 
 permissions:
   contents: write
+
+env:
+  VERSION_ARG: ${{ inputs.tag && format('VERSION={0}', inputs.tag) || '' }}
 
 jobs:
   linux:
@@ -27,7 +35,7 @@ jobs:
       - name: install dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential libncurses-dev nlohmann-json3-dev
       - name: build (static)
-        run: make STATIC=1 && strip rp
+        run: make STATIC=1 $VERSION_ARG && strip rp
       - name: smoke test
         run: ./rp --version && ./rp --help
       - name: package
@@ -48,9 +56,9 @@ jobs:
       - name: install dependencies
         run: brew install nlohmann-json
       - name: build arm64
-        run: make BUILD=build/arm64 TARGET=rp-arm64 CXXFLAGS="-std=c++17 -Wall -Wextra -O2 -arch arm64" LDFLAGS="-arch arm64"
+        run: make $VERSION_ARG BUILD=build/arm64 TARGET=rp-arm64 CXXFLAGS="-std=c++17 -Wall -Wextra -O2 -arch arm64" LDFLAGS="-arch arm64"
       - name: build x86_64
-        run: make BUILD=build/x86_64 TARGET=rp-x86_64 CXXFLAGS="-std=c++17 -Wall -Wextra -O2 -arch x86_64" LDFLAGS="-arch x86_64"
+        run: make $VERSION_ARG BUILD=build/x86_64 TARGET=rp-x86_64 CXXFLAGS="-std=c++17 -Wall -Wextra -O2 -arch x86_64" LDFLAGS="-arch x86_64"
       - name: make universal binary
         run: lipo -create -output rp rp-arm64 rp-x86_64 && strip rp && lipo -info rp
       - name: smoke test
@@ -63,7 +71,7 @@ jobs:
           path: rp-macos-universal.tar.gz
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     needs: [linux, macos]
     runs-on: ubuntu-24.04
     steps:
@@ -75,6 +83,9 @@ jobs:
       - name: publish release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: rp ${{ inputs.tag || github.ref_name }}
+          target_commitish: ${{ github.sha }}
           files: |
             dist/*.tar.gz
             install.sh
