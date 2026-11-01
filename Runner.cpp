@@ -2,14 +2,20 @@
 #include "AppState.hpp"
 #include <atomic>
 #include <cstdio>
+#include <csignal>
 #include <cstdlib>
 #include <ctime>
+#include <fcntl.h>
 #include <filesystem>
 #include <mutex>
 #include <ncurses.h>
+#include <spawn.h>
 #include <string>
 #include <sys/wait.h>
 #include <thread>
+#include <unistd.h>
+
+extern char **environ;
 
 std::string nowText() {
   std::time_t now = std::time(nullptr);
@@ -34,31 +40,79 @@ void setResult(SharedState &sharedState, const std::string &label, bool passed,
 }
 
 void addLine(SharedState &sharedState, const std::string &line) {
+  const std::size_t maxLines = 1000;
   std::lock_guard<std::mutex> lock(sharedState.mutex);
   sharedState.lines.push_back(line);
+  if (sharedState.lines.size() > maxLines) {
+    sharedState.lines.erase(sharedState.lines.begin());
+  }
+}
+
+pid_t spawnCommand(const std::string &command, int outFd) {
+  posix_spawn_file_actions_t actions;
+  posix_spawn_file_actions_init(&actions);
+  posix_spawn_file_actions_addopen(&actions, STDIN_FILENO, "/dev/null",
+                                   O_RDONLY, 0);
+  posix_spawn_file_actions_adddup2(&actions, outFd, STDOUT_FILENO);
+  posix_spawn_file_actions_adddup2(&actions, outFd, STDERR_FILENO);
+
+  posix_spawnattr_t attr;
+  posix_spawnattr_init(&attr);
+  posix_spawnattr_setflags(&attr, POSIX_SPAWN_SETPGROUP);
+  posix_spawnattr_setpgroup(&attr, 0);
+
+  std::string shell = "/bin/sh", flag = "-c", cmd = command;
+  char *argv[] = {shell.data(), flag.data(), cmd.data(), nullptr};
+  pid_t pid = 0;
+  int err = posix_spawn(&pid, "/bin/sh", &actions, &attr, argv, environ);
+
+  posix_spawnattr_destroy(&attr);
+  posix_spawn_file_actions_destroy(&actions);
+  return err == 0 ? pid : -1;
 }
 
 bool runNormalAction(SharedState &sharedState, const std::string &command) {
-  FILE *pipe = popen((command + " 2>&1").c_str(), "r");
-  if (pipe == nullptr) {
-    addLine(sharedState, "ERROR: pipe is nullptr. command did not start");
+  int fds[2];
+  if (pipe(fds) != 0) {
+    addLine(sharedState, "ERROR: could not open a pipe. command did not start");
     return false;
   }
+  fcntl(fds[0], F_SETFD, FD_CLOEXEC);
+  fcntl(fds[1], F_SETFD, FD_CLOEXEC);
 
+  pid_t pid = spawnCommand(command, fds[1]);
+  close(fds[1]);
+  if (pid < 0) {
+    close(fds[0]);
+    addLine(sharedState, "ERROR: command did not start");
+    return false;
+  }
+  sharedState.pid = pid;
+
+  FILE *out = fdopen(fds[0], "r");
   char buffer[512];
-  while (std::fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+  while (out != nullptr && std::fgets(buffer, sizeof(buffer), out) != nullptr) {
     std::string line = buffer;
-    if (!line.empty() && line.back() == '\n') {
+    while (!line.empty() && (line.back() == '\n' || line.back() == '\r')) {
       line.pop_back();
     }
     addLine(sharedState, line);
   }
-
-  int status = pclose(pipe);
-  int exitcode = -1;
-  if (WIFEXITED(status)) {
-    exitcode = WEXITSTATUS(status);
+  if (out != nullptr) {
+    std::fclose(out);
+  } else {
+    close(fds[0]);
   }
+
+  int status = 0;
+  waitpid(pid, &status, 0);
+  sharedState.pid = 0;
+  if (WIFSIGNALED(status)) {
+    addLine(sharedState, "stopped by signal " + std::to_string(WTERMSIG(status)));
+    addLine(sharedState, " ");
+    return false;
+  }
+  int exitcode = WIFEXITED(status) ? WEXITSTATUS(status) : -1;
   addLine(sharedState, "finished! exit code " + std::to_string(exitcode));
   addLine(sharedState, " ");
 
@@ -84,11 +138,11 @@ void stopCommand(SharedState &sharedState) {
     addLine(sharedState, "nothing to stop");
     return;
   }
-  int result = std::system("pkill -f \"[m]premote\" > /dev/null 2>&1");
-  if (result == 0) {
-    addLine(sharedState, "stopped");
+  pid_t pid = sharedState.pid;
+  if (pid > 0 && kill(-pid, SIGTERM) == 0) {
+    addLine(sharedState, "stopping...");
   } else {
-    addLine(sharedState, "nothing stopped, no running mpremote found");
+    addLine(sharedState, "could not stop the command");
   }
 }
 

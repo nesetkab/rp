@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <mutex>
 #include <string>
+#include <sys/types.h>
 #include <vector>
 
 struct Sparkle {
@@ -50,6 +51,7 @@ struct SharedState {
   std::vector<std::string> lines;
   std::mutex mutex;
   std::atomic<bool> busy{false};
+  std::atomic<pid_t> pid{0};
   Result result;
   std::filesystem::file_time_type lastDeploy{};
 };
