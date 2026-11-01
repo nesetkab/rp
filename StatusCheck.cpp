@@ -26,16 +26,19 @@ void checkFilesChanged(Status &status,
   }
   namespace fs = std::filesystem;
   std::error_code ec;
-  fs::recursive_directory_iterator it(status.path, ec);
-  if (ec)
-    return;
-  for (const fs::directory_entry &entry : it) {
-    if (entry.is_regular_file() && entry.path().extension() == ".py" &&
+  fs::recursive_directory_iterator it(
+      status.path, fs::directory_options::skip_permission_denied, ec);
+  for (fs::recursive_directory_iterator end; !ec && it != end;
+       it.increment(ec)) {
+    const fs::directory_entry &entry = *it;
+    if (entry.is_regular_file(ec) && entry.path().extension() == ".py" &&
         entry.last_write_time(ec) > deployTime) {
       status.filesFound = FilesState::Changed;
       return;
     }
   }
+  if (ec)
+    return;
   status.filesFound = FilesState::Deployed;
 }
 

@@ -1,3 +1,4 @@
+#pragma once
 #include "AppState.hpp"
 #include <ncurses.h>
 #include <string>
