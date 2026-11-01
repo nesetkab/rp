@@ -57,7 +57,8 @@ Config loadConfig(const std::string &path) {
                                path + "\"");
     }
     json config = json::parse(in);
-    return {parseActions(config), getPrefix(config)};
+    return {parseActions(config), getPrefix(config),
+            config.value("deviceDir", "/dev")};
   } catch (const nlohmann::json::exception &e) {
     throw std::runtime_error(std::string("config error: ") + e.what());
   }

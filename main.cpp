@@ -29,7 +29,7 @@ void drawEverything(const std::array<Panel *, 4> &windows, Status &status,
                     const int &selAction, const std::vector<Sparkle> &sparkles,
                     std::chrono::steady_clock::time_point startTime,
                     bool showHeader) {
-  checkStatus(status, sharedState, config.devicePrefix);
+  checkStatus(status, sharedState, config);
   drawActions(windows.at(1)->get(), config.actions, selAction);
   {
     std::lock_guard<std::mutex> lock(sharedState.mutex);
