@@ -15,6 +15,9 @@ int getInnerWidth(WINDOW *w) { return std::max(0, getmaxx(w) - 4); }
 
 void drawLine(WINDOW *w, int row, int col, const ColoredLine &coloredLine,
               int maxl = -1) {
+  if (maxl >= 0) {
+    maxl = bytesForChars(coloredLine.label, maxl);
+  }
   wattron(w, COLOR_PAIR(coloredLine.color));
   mvwprintw(w, row, col, "%.*s", maxl, coloredLine.label.c_str());
   wattroff(w, COLOR_PAIR(coloredLine.color));
@@ -110,7 +113,9 @@ void drawLogs(WINDOW *w, const std::vector<std::string> &logLines) {
   int start = std::max(0, lines - visible);
   int maxl = getInnerWidth(w);
   for (int i = start; i < lines; i++) {
-    mvwprintw(w, i - start + 1, 2, "%.*s", maxl, logLines.at(i).c_str());
+    const std::string &line = logLines.at(i);
+    mvwprintw(w, i - start + 1, 2, "%.*s", bytesForChars(line, maxl),
+              line.c_str());
   }
 }
 

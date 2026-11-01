@@ -11,3 +11,16 @@ int countChars(const std::string &str) {
   }
   return length;
 }
+
+int bytesForChars(const std::string &str, int chars) {
+  int count = 0;
+  for (std::size_t i = 0; i < str.size(); i++) {
+    if ((static_cast<unsigned char>(str[i]) & 0xC0) != 0x80) {
+      if (count == chars) {
+        return static_cast<int>(i);
+      }
+      count++;
+    }
+  }
+  return static_cast<int>(str.size());
+}
