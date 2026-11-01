@@ -1,2 +1,5 @@
 GUIDE.md
 rp
+rp-debug
+build/
+.DS_Store
