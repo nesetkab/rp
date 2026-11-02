@@ -73,12 +73,20 @@ Run `rp` from the folder of your Pico project, the one with your `Makefile` and 
 
 ```sh
 cd ~/my-pico-project
-rp                       # uses ./config.json
+rp                       # uses ./config.json, or your default config
 rp ~/configs/pico.json   # or point it at any config file
 rp --demo                # fake pico, no hardware
 ```
 
 Commands run in the folder you started `rp` from, and the deploy tracker watches the `.py` files in that folder.
+
+### Which config gets used
+
+1. A path you pass, like `rp ~/configs/pico.json`.
+2. `config.json` in the current folder, if there is one.
+3. Your default config at `~/.config/rp/config.json` (or `$XDG_CONFIG_HOME/rp/config.json`). `rp` creates it the first time it needs it, with plain `mpremote` actions that work in any folder with a `main.py`.
+
+So you can set up your default once and only add a local `config.json` to projects that need something different. The log shows which file was loaded, and `R` looks again, so adding a local `config.json` and pressing `R` switches to it.
 
 ### Keys
 
@@ -87,7 +95,7 @@ Commands run in the folder you started `rp` from, and the deploy tracker watches
 | `↑` / `↓` | Move the selection |
 | `Enter` or `Space` | Run the selected action |
 | Action key (`r`, `d`, ...) | Run that action directly |
-| `R` | Reload `config.json` |
+| `R` | Reload the config |
 | `q` | Stop any running command and quit |
 
 ### The status bar
@@ -157,13 +165,13 @@ cd example
 | `Header.cpp`, `Sparkler.cpp` | The `rp` logo and the twinkling sparkles. |
 | `Runner.cpp` | Starts commands with `posix_spawn` in their own process group, reads their output on a worker thread, and stops them with `SIGTERM`. |
 | `StatusCheck.cpp` | Once a second, looks for the device in `/dev` and checks `.py` files against the last deploy time. |
-| `Config.cpp` | Loads and validates `config.json`. |
+| `Config.cpp` | Finds the config (passed path, local, then default), writes the default on first run, and validates it. |
 | `Demo.cpp` | makes the `--demo` project, fake `mpremote` + fake `/dev` + example `main.py` |
 | `AppState.hpp` | The shared state between the UI thread and the worker thread, guarded by a mutex. |
 
 ## Troubleshooting
 
-- **`config error: could not open config file`**: start `rp` in a folder with a `config.json`, or pass the path as the first argument.
+- **`config error: could not open config file`**: check the path you passed. Without a path, `rp` falls back to `~/.config/rp/config.json`.
 - **Device shows `not found`**: run `mpremote devs` and set `devicePrefix` to the start of the name it prints.
 - **A command fails right after the REPL**: the serial port is exclusive. Make sure nothing else (another terminal, Thonny, a serial monitor) has the port open.
 - **The terminal looks broken after a crash**: run `reset`.

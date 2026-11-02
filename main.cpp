@@ -60,7 +60,8 @@ Layout resize(const Config &config, const std::array<Panel *, 4> w) {
 
 void printUsage() {
   std::cout << "rp " RP_VERSION ", pico dashboard in ur terminal\n\n"
-               "  rp                 uses ./config.json\n"
+               "  rp                 uses ./config.json, or "
+               "~/.config/rp/config.json if there isnt one\n"
                "  rp <config.json>   uses some other config\n"
                "  rp --demo          try it w a fake pico, no hardware needed\n"
                "  rp --version       version\n"
@@ -79,13 +80,16 @@ int main(int argc, char *argv[]) {
   }
   try {
     std::unique_ptr<DemoProject> demo;
-    std::string configPath = "config.json";
+    std::string configPath;
     if (arg == "--demo") {
       demo = std::make_unique<DemoProject>();
       configPath = demo->configPath();
     } else if (!arg.empty()) {
       configPath = arg;
+    } else {
+      configPath = findConfig();
     }
+    const bool searchConfig = !demo && arg.empty();
     Config config = loadConfig(configPath);
     int selAction = 0;
     Status status = {std::filesystem::current_path(), false,
@@ -97,6 +101,8 @@ int main(int argc, char *argv[]) {
       for (const std::string &line : demo->welcomeLines()) {
         addLine(sharedState, line);
       }
+    } else {
+      addLine(sharedState, "using config " + configPath);
     }
 
     std::vector<Sparkle> sparkles = getSparkles(getPathLine(status).label);
@@ -148,12 +154,15 @@ int main(int argc, char *argv[]) {
 
         case 'R':
           try {
+            if (searchConfig) {
+              configPath = findConfig();
+            }
             config = loadConfig(configPath);
             if (selAction >= intpls(config.actions.size())) {
               selAction = 0;
             }
             layout = resize(config, windows);
-            addLine(sharedState, "config reloaded");
+            addLine(sharedState, "config reloaded from " + configPath);
           } catch (const std::exception &e) {
             addLine(sharedState,
                     "reload config error: " + std::string(e.what()));

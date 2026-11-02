@@ -1,5 +1,7 @@
 #include "Config.hpp"
 #include "AppState.hpp"
+#include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <map>
 #include <nlohmann/json.hpp>
@@ -8,6 +10,60 @@
 #include <vector>
 
 using json = nlohmann::json;
+namespace fs = std::filesystem;
+
+#ifdef __APPLE__
+const std::string defaultPrefix = "cu.usbmodem";
+#else
+const std::string defaultPrefix = "ttyACM";
+#endif
+
+std::string defaultConfig() {
+  return R"JSON({
+  "devicePrefix": ")JSON" +
+         defaultPrefix + R"JSON(",
+  "actions": [
+    { "label": "run",    "key": "r", "command": "PYTHONUNBUFFERED=1 mpremote run main.py" },
+    { "label": "deploy", "key": "d", "command": "mpremote fs cp main.py :main.py", "kind": "deploy" },
+    { "label": "repl",   "key": "p", "command": "mpremote repl", "kind": "interactive" },
+    { "label": "ls",     "key": "l", "command": "mpremote fs ls" },
+    { "label": "reset",  "key": "b", "command": "mpremote reset" },
+    { "label": "stop",   "key": "s", "kind": "stop" }
+  ]
+}
+)JSON";
+}
+
+fs::path globalConfigPath() {
+  const char *xdg = std::getenv("XDG_CONFIG_HOME");
+  if (xdg != nullptr && *xdg != '\0') {
+    return fs::path(xdg) / "rp" / "config.json";
+  }
+  const char *home = std::getenv("HOME");
+  if (home == nullptr || *home == '\0') {
+    throw std::runtime_error(
+        "config error: HOME is not set, so there is no default config");
+  }
+  return fs::path(home) / ".config" / "rp" / "config.json";
+}
+
+std::string findConfig() {
+  std::error_code ec;
+  if (fs::exists("config.json", ec)) {
+    return "config.json";
+  }
+  fs::path global = globalConfigPath();
+  if (!fs::exists(global, ec)) {
+    fs::create_directories(global.parent_path(), ec);
+    std::ofstream out(global);
+    if (!out) {
+      throw std::runtime_error("config error: could not write default config \"" +
+                               global.string() + "\"");
+    }
+    out << defaultConfig();
+  }
+  return global.string();
+}
 
 std::vector<Action> parseActions(const json &config) {
   const std::map<std::string, ActionKind> kinds = {

@@ -3,3 +3,4 @@
 #include <string>
 
 Config loadConfig(const std::string &path);
+std::string findConfig();
